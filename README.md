@@ -7,7 +7,7 @@
 Клонируйте этот репозиторий:
 
 ```sh
-git clone https://github.com/DobryySoul/yandex_repo.git
+git clone https://github.com/DobryySoul/Calc-service.git
 ```
 
 Мы почти готовы запустить сервис, но сначала нам нужно выполнить некоторые настройки конфигурации.
@@ -29,6 +29,7 @@ export PORT=порт
 ```
 
 ## Эндпоинты
+
 Сервис имеет следующий эндпоинт с url-ом:
 - `/api/v1/calculate`
 
