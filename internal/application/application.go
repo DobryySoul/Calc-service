@@ -140,7 +140,7 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resp Response
-	resp.Result = fmt.Sprintf("%.0f", result)
+	resp.Result = fmt.Sprintf("%.4f", result)
 
 	jsonResp, err := json.Marshal(&resp)
 	if err != nil {
