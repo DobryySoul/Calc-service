@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/DobryySoul/Calc-service/internal/agent/application"
 	"github.com/DobryySoul/Calc-service/internal/agent/config"
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/application"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app := application.NewApplication(cfg)
-	app.Run()
+	ctx := context.Background()
+	app := application.NewApplicationAgent(cfg)
+	app.Run(ctx)
 }

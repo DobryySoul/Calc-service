@@ -8,7 +8,7 @@ import (
 )
 
 type Config struct {
-	computingPOWER int
+	ComputingPOWER int
 	Host           string
 	Port           int
 }
@@ -33,15 +33,15 @@ func ParseFlags() (*string, *int) {
 }
 
 func NewConfigForAgent() (*Config, error) {
-	computingPower, err := strconv.Atoi(os.Getenv("COMPUTING_POWER"))
-	if err != nil || computingPower < 0 {
+	power, err := strconv.Atoi(os.Getenv("COMPUTING_POWER"))
+	if err != nil || power < 0 {
 		return nil, fmt.Errorf("failed to parse COMPUTING_POWER: %w", err)
 	}
 
 	host, port := ParseFlags()
 
 	cfg := &Config{
-		computingPOWER: computingPower,
+		ComputingPOWER: power,
 		Host:           *host,
 		Port:           *port,
 	}
