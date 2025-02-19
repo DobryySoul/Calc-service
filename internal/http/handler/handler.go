@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
 
+	"github.com/DobryySoul/Calc-service/internal/http/models"
 	"github.com/DobryySoul/Calc-service/internal/result"
 	"github.com/DobryySoul/Calc-service/internal/service"
 	"github.com/DobryySoul/Calc-service/internal/task"
@@ -67,12 +67,7 @@ func (calcStates *calcStates) calculate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	type Expression struct {
-		Id         int    `json:"id"`
-		Expression string `json:"expression"`
-	}
-
-	var expr Expression
+	var expr models.Expression
 
 	err := json.NewDecoder(r.Body).Decode(&expr)
 	if err != nil {
@@ -85,9 +80,18 @@ func (calcStates *calcStates) calculate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	var answer models.Answer
+	answer.Id = expr.Id
 
-	fmt.Fprintf(w, "Expression %d added", expr.Id)
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "    ")
+	err = encoder.Encode(&answer)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
