@@ -6,14 +6,14 @@ import (
 	"unicode"
 )
 
-func Calc(expression string) (float64, error) {
+func NewRPN(expression string) ([]string, error) {
 	tokens := createToken(expression)
 	output, err := convertingAnExpression(tokens)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return Counting(output)
+	return output, nil
 }
 
 func createToken(expression string) []string {

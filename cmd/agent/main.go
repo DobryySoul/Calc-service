@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx := context.Background()
 	app := application.NewApplicationAgent(cfg)
-	app.Run(ctx)
+	exitCode := app.Run(context.Background())
+	os.Exit(exitCode)
 }

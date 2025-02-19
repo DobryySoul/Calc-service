@@ -18,17 +18,17 @@ func NewConfigForOrchestrator() (*Config, error) {
 	if err != nil || addition < 0 {
 		return nil, fmt.Errorf("failed to parse TIME_ADDITION_MS: %w", err)
 	}
-	subtract, err := time.ParseDuration(os.Getenv("TIME_SUBTRACT_MS") + "ms")
+	subtract, err := time.ParseDuration(os.Getenv("TIME_SUBTRACTION_MS") + "ms")
 	if err != nil || subtract < 0 {
-		return nil, fmt.Errorf("failed to parse TIME_SUBTRACT_MS: %w", err)
+		return nil, fmt.Errorf("failed to parse TIME_SUBTRACTION_MS: %w", err)
 	}
-	multiply, err := time.ParseDuration(os.Getenv("TIME_MULTIPLY_MS") + "ms")
+	multiply, err := time.ParseDuration(os.Getenv("TIME_MULTIPLICATIONS_MS") + "ms")
 	if err != nil || multiply < 0 {
-		return nil, fmt.Errorf("failed to parse TIME_MULTIPLY_MS: %w", err)
+		return nil, fmt.Errorf("failed to parse TIME_MULTIPLICATIONS_MS: %w", err)
 	}
-	division, err := time.ParseDuration(os.Getenv("TIME_DIVISION_MS") + "ms")
+	division, err := time.ParseDuration(os.Getenv("TIME_DIVISIONS_MS") + "ms")
 	if err != nil || division < 0 {
-		return nil, fmt.Errorf("failed to parse TIME_DIVISION_MS: %w", err)
+		return nil, fmt.Errorf("failed to parse TIME_DIVISIONS_MS: %w", err)
 	}
 
 	cfg := &Config{

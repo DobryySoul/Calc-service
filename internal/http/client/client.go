@@ -32,10 +32,15 @@ func (c *Client) GetTask() *task.Task {
 
 	resp, err := c.Do(req.WithContext(ctx))
 	if err != nil {
+		time.Sleep(500 * time.Millisecond)
 		return nil
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
 
 	answer := struct {
 		Task task.Task `json:"task"`
@@ -65,7 +70,6 @@ func (c *Client) SendResult(result result.Result) {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
 	defer cancel()
 
 	resp, err := c.Do(req.WithContext(ctx))
@@ -74,5 +78,4 @@ func (c *Client) SendResult(result result.Result) {
 	}
 
 	defer resp.Body.Close()
-
 }

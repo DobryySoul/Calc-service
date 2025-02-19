@@ -43,28 +43,29 @@ func NewApplicationAgent(cfg *config.Config) *Application {
 	}
 }
 
-func (a *Application) Run(ctx context.Context) {
-	defer close(a.tasks)
-	defer close(a.results)
+func (app *Application) Run(ctx context.Context) int {
+	defer close(app.tasks)
+	defer close(app.results)
 
-	for i := 0; i < a.cfg.ComputingPOWER; i++ {
-		go worker(a.tasks, a.results, a.ready)
+	for i := 0; i < app.cfg.ComputingPOWER; i++ {
+		go worker(app.tasks, app.results, app.ready)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			return
-		case <-a.ready:
+			return 0
+		case <-app.ready:
 			go func() {
-				task := a.client.GetTask()
+				task := app.client.GetTask()
 				if task == nil {
-					a.ready <- struct{}{}
+					app.ready <- struct{}{}
+				} else {
+					app.tasks <- *task
 				}
-				a.tasks <- *task
 			}()
-		case result := <-a.results:
-			a.client.SendResult(result)
+		case result := <-app.results:
+			app.client.SendResult(result)
 		}
 	}
 }
