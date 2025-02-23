@@ -2,46 +2,44 @@ package application
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 
+	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/http/server"
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Application struct {
-	cfg config.Config
+	cfg    config.Config
+	logger *zap.Logger
 }
 
 func NewApplicationOrchestrator(cfg *config.Config) *Application {
-	return &Application{cfg: *cfg}
+	logger := logger.SetupLogger()
+	return &Application{cfg: *cfg, logger: logger}
 }
 
 func (a *Application) Run(ctx context.Context) int {
-	logger := log.New(
-		os.Stderr,
-		"Orchestrator: ",
-		log.Ldate|log.Ltime|log.Lmsgprefix,
-	)
+	defer a.logger.Sync()
 
-	shutDownFunc, err := server.Run(ctx, logger, a.cfg)
+	shutDownFunc, err := server.Run(ctx, a.logger, a.cfg)
 	if err != nil {
-		logger.Printf("Run server error: %v\n", err)
+		a.logger.Error("Run server error", zap.String("error", err.Error()))
 		return 1
 	}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
 	<-c
-	cancel()
 	shutDownFunc(ctx)
+
+	a.logger.Fatal("Server has been shut down")
 
 	return 0
 }

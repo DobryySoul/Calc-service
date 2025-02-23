@@ -3,64 +3,47 @@ package server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
-	"time"
 
+	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/service"
+	"github.com/DobryySoul/Calc-service/pkg/middleware/logger"
+	"go.uber.org/zap"
 )
 
-func Run(ctx context.Context, logger *log.Logger, cfg config.Config) (func(context.Context) error, error) {
+func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(context.Context) error, error) {
+
 	calcService := service.NewCalcService(cfg)
-	
+
 	muxHandler, err := newMuxHandler(ctx, logger, calcService)
 	if err != nil {
-		return nil, err
+		logger.Error("server initialization error", zap.Error(err))
+		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
 
 	srv := &http.Server{Addr: ":8081", Handler: muxHandler}
-	logger.Printf("START SERVER ON PORT 8081\n")
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			logger.Printf("ListenAndServe: %v\n", err)
+		logger.Info("START SERVER ON PORT 8081")
+
+		err := srv.ListenAndServe()
+		if err != nil {
+			logger.Error("server error", zap.Error(err))
 		}
 	}()
 
 	return srv.Shutdown, nil
-
 }
 
-func newMuxHandler(ctx context.Context, logger *log.Logger, calcService *service.CalcService) (http.Handler, error) {
-	muxHandler, err := handler.NewHandler(ctx, calcService)
+func newMuxHandler(ctx context.Context, log *zap.Logger, calcService *service.CalcService) (http.Handler, error) {
+	muxHandler, err := handler.NewHandler(ctx, log, calcService)
 	if err != nil {
+		log.Error("handler initialization error", zap.Error(err))
 		return nil, fmt.Errorf("handler initialization error: %w", err)
 	}
 
-	muxHandler = handler.Decorate(muxHandler, loggingMiddleware(logger))
+	muxHandler = handler.Middlewares(muxHandler, logger.LoggerMiddleware(log))
 
 	return muxHandler, nil
-}
-
-func loggingMiddleware(logger *log.Logger) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-
-			next.ServeHTTP(w, r)
-
-			if r.URL.Path == "/internal/task" && r.Method == "GET" {
-				return
-			}
-			duration := time.Since(start)
-			logger.Printf(
-				"HTTP request - method: %s, path: %s, duration: %d\n",
-				r.Method,
-				r.URL.Path,
-				duration,
-			)
-		})
-	}
 }

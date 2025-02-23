@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/result"
-	"github.com/DobryySoul/Calc-service/internal/task"
+	"github.com/DobryySoul/Calc-service/internal/http/models"
 )
 
 type Client struct {
@@ -18,24 +18,23 @@ type Client struct {
 	Port int
 }
 
-func (c *Client) GetTask() *task.Task {
-	url := fmt.Sprintf("http://%s:%d/internal/task", c.Host, c.Port)
-
+func (client *Client) GetTask() *models.Task {
+	url := fmt.Sprintf("http://%s:%d/internal/task", client.Host, client.Port)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	req.Header.Set("Content-Type", "application/json")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := c.Do(req.WithContext(ctx))
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		time.Sleep(500 * time.Millisecond)
+
 		return nil
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
@@ -43,39 +42,44 @@ func (c *Client) GetTask() *task.Task {
 	}
 
 	answer := struct {
-		Task task.Task `json:"task"`
+		Task models.Task `json:"task"`
 	}{}
 
-	if err := json.NewDecoder(resp.Body).Decode(&answer); err != nil {
+	err = json.NewDecoder(resp.Body).Decode(&answer)
+	if err != nil {
 		return nil
 	}
 
 	return &answer.Task
 }
 
-func (c *Client) SendResult(result result.Result) {
+func (client *Client) SendResult(result models.Result) {
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
-	encoder.SetIndent("", "    ")
 	err := encoder.Encode(result)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while encoding result: %v\n", err)
 		return
 	}
 
-	url := fmt.Sprintf("http://%s:%d/internal/task", c.Host, c.Port)
-
+	url := fmt.Sprintf("http://%s:%d/internal/task", client.Host, client.Port)
 	req, err := http.NewRequest(http.MethodPost, url, &buf)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while creating request for posting result: %v\n", err)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := c.Do(req.WithContext(ctx))
+	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while posting result to server: %v\n", err)
 		return
 	}
 
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		fmt.Fprintf(os.Stderr, "response status code is %d, expected %d\n", resp.StatusCode, http.StatusOK)
+	}
 }

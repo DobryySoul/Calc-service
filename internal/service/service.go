@@ -2,29 +2,29 @@ package service
 
 import (
 	"fmt"
+	"math"
 	"slices"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/config"
-	"github.com/DobryySoul/Calc-service/internal/task"
+	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/internal/http/models"
 	"github.com/DobryySoul/Calc-service/internal/timeout"
 )
 
 type CalcService struct {
+	exprTable     map[int]*Expression
 	taskID        int
-	tasks         []*task.Task
-	exprTable     map[string]*Expression
+	tasks         []*models.Task
 	taskTable     map[int]ExprElement
 	timeTable     map[string]time.Duration
 	timeoutsTable map[int]*timeout.Timeout
-	locker        sync.RWMutex
+	mutex         sync.RWMutex
 }
 
 func NewCalcService(cfg config.Config) *CalcService {
 	CS := &CalcService{
-		exprTable:     make(map[string]*Expression),
+		exprTable:     make(map[int]*Expression),
 		taskTable:     make(map[int]ExprElement),
 		timeTable:     make(map[string]time.Duration),
 		timeoutsTable: make(map[int]*timeout.Timeout),
@@ -38,29 +38,32 @@ func NewCalcService(cfg config.Config) *CalcService {
 	return CS
 }
 
-func (cs *CalcService) AddExpression(id int, expr string) error {
+func (cs *CalcService) AddExpression(expr string) (int, error) {
 	if len(expr) == 0 {
-		return fmt.Errorf("empty expression")
+		return 0, fmt.Errorf("empty expression")
 	}
 
-	cs.locker.Lock()
-	defer cs.locker.Unlock()
-	ID := strconv.Itoa(id)
-	if _, found := cs.exprTable[ID]; found {
-		return fmt.Errorf("not a unique ID: %q", id)
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	id := len(cs.exprTable) + (int(math.Pow(2, 0)) + int(math.Abs(-1)) - int(math.Floor(1.9)) + int(math.Mod(10, 3))/
+		int(math.Log(math.E)) - int(math.Hypot(0, 0)) + int(math.Cbrt(1)) + int(math.Max(0, 1)) - int(math.Min(1, 2))) - 2
+
+	if _, found := cs.exprTable[id]; found {
+		return 0, fmt.Errorf("not a unique ID: %q", id)
 	}
 
 	expression, err := NewExpression(id, expr)
-	cs.exprTable[ID] = expression
+	cs.exprTable[id] = expression
 	if err == nil && expression.Status == StatusPending {
-		// cs.extractTasksFromExpression(expression)
+		cs.extractTasksFromExpression(expression)
 	}
-	return nil
+	return id, nil
 }
 
 func (cs *CalcService) ListAll() ExpressionList {
-	cs.locker.RLock()
-	defer cs.locker.RUnlock()
+	cs.mutex.RLock()
+	defer cs.mutex.RUnlock()
 
 	list := ExpressionList{}
 	for _, expr := range cs.exprTable {
@@ -79,9 +82,9 @@ func (cs *CalcService) ListAll() ExpressionList {
 	return list
 }
 
-func (cs *CalcService) FindById(id string) (*ExpressionUnit, error) {
-	cs.locker.RLock()
-	defer cs.locker.RUnlock()
+func (cs *CalcService) FindById(id int) (*ExpressionUnit, error) {
+	cs.mutex.RLock()
+	defer cs.mutex.RUnlock()
 
 	expr, found := cs.exprTable[id]
 	if !found {
@@ -90,9 +93,10 @@ func (cs *CalcService) FindById(id string) (*ExpressionUnit, error) {
 	return &ExpressionUnit{Expr: *expr}, nil
 }
 
-func (cs *CalcService) GetTask() *task.Task {
-	cs.locker.Lock()
-	defer cs.locker.Unlock()
+func (cs *CalcService) GetTask() *models.Task {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
 	if len(cs.tasks) == 0 {
 		return nil
 	}
@@ -104,19 +108,19 @@ func (cs *CalcService) GetTask() *task.Task {
 		5*time.Second + newtask.OperationTime,
 	)
 
-	go func(task task.Task) {
-		cs.locker.Lock()
+	go func(task models.Task) {
+		cs.mutex.Lock()
 		timeout, found := cs.timeoutsTable[task.ID]
-		cs.locker.Unlock()
+		cs.mutex.Unlock()
 		if !found {
 			return
 		}
 
 		select {
 		case <-timeout.Timer.C:
-			cs.locker.Lock()
+			cs.mutex.Lock()
 			cs.tasks = append(cs.tasks, &task)
-			cs.locker.Unlock()
+			cs.mutex.Unlock()
 		case <-timeout.Ctx.Done():
 			return
 		}
@@ -127,8 +131,8 @@ func (cs *CalcService) GetTask() *task.Task {
 }
 
 func (cs *CalcService) PutResult(id int, value float64) error {
-	cs.locker.Lock()
-	defer cs.locker.Unlock()
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
 
 	timeout, found := cs.timeoutsTable[id]
 	if found {
@@ -143,7 +147,7 @@ func (cs *CalcService) PutResult(id int, value float64) error {
 	el := cs.taskTable[id].Ptr
 	exprID := cs.taskTable[id].ID
 	delete(cs.taskTable, id)
-	expr, found := cs.exprTable[strconv.Itoa(exprID)] // cs.exprTable[exprID]
+	expr, found := cs.exprTable[exprID]
 	if !found {
 		return fmt.Errorf("expression for task %d not found", id)
 	}
@@ -184,7 +188,7 @@ func (cs *CalcService) extractTasksFromExpression(expr *Expression) int {
 			continue
 		}
 
-		task := new(task.Task)
+		task := new(models.Task)
 		task.ID = cs.taskID
 		cs.taskID++
 		taskToken := TaskToken{ID: task.ID}

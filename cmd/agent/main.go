@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/DobryySoul/Calc-service/internal/agent/application"
-	"github.com/DobryySoul/Calc-service/internal/agent/config"
+	"github.com/DobryySoul/Calc-service/internal/app/agent/application"
+	"github.com/DobryySoul/Calc-service/internal/app/agent/config"
 )
 
 func main() {

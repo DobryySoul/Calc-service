@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	rpn "github.com/DobryySoul/Calc-service/pkg/calculation"
+	"github.com/DobryySoul/Calc-service/pkg/calculation"
 )
 
 const (
@@ -50,9 +50,10 @@ func (num TaskToken) Type() int {
 
 type Expression struct {
 	*list.List
-	ID     int `json:"id"`
-	Status string `json:"status"`
-	Result string `json:"result"`
+	ID         int    `json:"id"`
+	Status     string `json:"status"`
+	Result     string `json:"result"`
+	Expression string `json:"expression"`
 }
 
 type ExpressionUnit struct {
@@ -64,32 +65,35 @@ type ExpressionList struct {
 }
 
 func NewExpression(id int, expr string) (*Expression, error) {
-	rpn, err := rpn.NewRPN(expr)
+	rpn, err := calculation.NewRPN(expr)
 	if err != nil {
 		expression := Expression{
-			List:   list.New(),
-			ID:     id,
-			Status: StatusError,
-			Result: "",
+			List:       list.New(),
+			ID:         id,
+			Status:     StatusError,
+			Result:     "",
+			Expression: expr,
 		}
 		return &expression, err
 	}
 
 	if len(rpn) == 1 {
 		expression := Expression{
-			List:   list.New(),
-			ID:     id,
-			Status: StatusDone,
-			Result: rpn[0],
+			List:       list.New(),
+			ID:         id,
+			Status:     StatusDone,
+			Result:     rpn[0],
+			Expression: expr,
 		}
 		return &expression, nil
 	}
 
 	expression := Expression{
-		List:   list.New(),
-		ID:     id,
-		Status: StatusPending,
-		Result: "",
+		List:       list.New(),
+		ID:         id,
+		Status:     StatusPending,
+		Result:     "",
+		Expression: expr,
 	}
 	for _, val := range rpn {
 		if strings.Contains("-+*/", val) {

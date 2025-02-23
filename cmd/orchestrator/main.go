@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/application"
-	"github.com/DobryySoul/Calc-service/internal/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/application"
+	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 )
 
 func main() {
