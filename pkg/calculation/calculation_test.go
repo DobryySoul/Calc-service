@@ -1,94 +1,94 @@
-package calculation_test
+package calculation
 
-// import (
-// 	"testing"
+import (
+	"testing"
+)
 
-// 	"github.com/DobryySoul/Calc-service/pkg/calculation"
-// )
+func TestRPN(t *testing.T) {
+	tests := []struct {
+		name        string
+		expression  string
+		expected    []string
+		expectError bool
+	}{
+		{
+			name:        "Simple addition",
+			expression:  "3 + 4",
+			expected:    []string{"3", "4", "+"},
+			expectError: false,
+		},
+		{
+			name:        "Simple subtraction",
+			expression:  "5 - 2",
+			expected:    []string{"5", "2", "-"},
+			expectError: false,
+		},
+		{
+			name:        "Simple multiplication",
+			expression:  "6 * 3",
+			expected:    []string{"6", "3", "*"},
+			expectError: false,
+		},
+		{
+			name:        "Simple division",
+			expression:  "8 / 2",
+			expected:    []string{"8", "2", "/"},
+			expectError: false,
+		},
+		{
+			name:        "Expression with parentheses",
+			expression:  "( 3 + 4 ) * 2",
+			expected:    []string{"3", "4", "+", "2", "*"},
+			expectError: false,
+		},
+		{
+			name:        "Expression with floating point numbers",
+			expression:  "3.5 + 4.2",
+			expected:    []string{"3.5", "4.2", "+"},
+			expectError: false,
+		},
+		{
+			name:        "Complex expression",
+			expression:  "( 3 + 4 ) * ( 2 - 1 )",
+			expected:    []string{"3", "4", "+", "2", "1", "-", "*"},
+			expectError: false,
+		},
+		{
+			name:        "Mismatched parentheses",
+			expression:  "( 3 + 4 ) * ( 2 - 1",
+			expected:    nil,
+			expectError: true,
+		},
+	}
 
-// func TestRPN(t *testing.T) {
-// 	testCasesSuccess := []struct {
-// 		name           string
-// 		expression     string
-// 		expectedResult float64
-// 	}{
-// 		{
-// 			name:           "Successful calculation",
-// 			expression:     "1+1",
-// 			expectedResult: 2,
-// 		},
-// 		{
-// 			name:           "Successful calculation",
-// 			expression:     "20+20",
-// 			expectedResult: 40,
-// 		},
-// 		{
-// 			name:           "Priority with parentheses",
-// 			expression:     "(2+2)*2",
-// 			expectedResult: 8,
-// 		},
-// 		{
-// 			name:           "Priority",
-// 			expression:     "2+2*2",
-// 			expectedResult: 6,
-// 		},
-// 		{
-// 			name:           "Division",
-// 			expression:     "1/2",
-// 			expectedResult: 0.5,
-// 		},
-// 		{
-// 			name:           "Hard expression",
-// 			expression:     "(((1/2 + 3/2) * 15 - 1) * 84) / 2 - 5 * 220",
-// 			expectedResult: 118,
-// 		},
-// 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := RPN(tt.expression)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected error, but got none")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if !compareSlices(result, tt.expected) {
+					t.Errorf("Expected %v, got %v", tt.expected, result)
+				}
+			}
+		})
+	}
+}
 
-// 	for _, testCase := range testCasesSuccess {
-// 		t.Run(testCase.name, func(t *testing.T) {
-// 			val, err := calculation.Calc(testCase.expression)
-// 			if err != nil {
-// 				t.Fatalf("successful case %s returns error", testCase.expression)
-// 			}
-// 			if val != testCase.expectedResult {
-// 				t.Fatalf("%f should be equal %f", val, testCase.expectedResult)
-// 			}
-// 		})
-// 	}
-
-// 	testCasesFail := []struct {
-// 		name        string
-// 		expression  string
-// 		expectedErr error
-// 	}{
-// 		{
-// 			name:       "Simple",
-// 			expression: "1+1*",
-// 		},
-// 		{
-// 			name:       "Priority",
-// 			expression: "2+2**2",
-// 		},
-// 		{
-// 			name:       "Priority",
-// 			expression: "((2+2-*(2",
-// 		},
-// 		{
-// 			name:       "Unknown operator",
-// 			expression: "2 + 2 ^ 2",
-// 		},
-// 		{
-// 			name:       "Empty",
-// 			expression: "",
-// 		},
-// 	}
-
-// 	for _, testCase := range testCasesFail {
-// 		t.Run(testCase.name, func(t *testing.T) {
-// 			val, err := calculation.Calc(testCase.expression)
-// 			if err == nil {
-// 				t.Fatalf("expression %s is invalid but result  %f was obtained", testCase.expression, val)
-// 			}
-// 		})
-// 	}
-// }
+// Вспомогательная функция для сравнения слайсов
+func compareSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
