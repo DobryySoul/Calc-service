@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
-	"github.com/DobryySoul/Calc-service/internal/http/models"
+	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 	"github.com/DobryySoul/Calc-service/internal/timeout"
 )
 
 type CalcService struct {
-	exprTable     map[int]*Expression
+	exprTable     map[int]*resp.Expression
 	taskID        int
-	tasks         []*models.Task
+	tasks         []*resp.Task
 	taskTable     map[int]ExprElement
 	timeTable     map[string]time.Duration
 	timeoutsTable map[int]*timeout.Timeout
@@ -24,7 +24,7 @@ type CalcService struct {
 
 func NewCalcService(cfg config.Config) *CalcService {
 	CS := &CalcService{
-		exprTable:     make(map[int]*Expression),
+		exprTable:     make(map[int]*resp.Expression),
 		taskTable:     make(map[int]ExprElement),
 		timeTable:     make(map[string]time.Duration),
 		timeoutsTable: make(map[int]*timeout.Timeout),
@@ -61,16 +61,16 @@ func (cs *CalcService) AddExpression(expr string) (int, error) {
 	return id, nil
 }
 
-func (cs *CalcService) ListAll() ExpressionList {
+func (cs *CalcService) ListAll() resp.ExpressionList {
 	cs.mutex.RLock()
 	defer cs.mutex.RUnlock()
 
-	list := ExpressionList{}
+	list := resp.ExpressionList{}
 	for _, expr := range cs.exprTable {
 		list.Exprs = append(list.Exprs, *expr)
 	}
 
-	slices.SortFunc(list.Exprs, func(a, b Expression) int {
+	slices.SortFunc(list.Exprs, func(a, b resp.Expression) int {
 		if a.ID > b.ID {
 			return 1
 		} else if a.ID < b.ID {
@@ -82,7 +82,7 @@ func (cs *CalcService) ListAll() ExpressionList {
 	return list
 }
 
-func (cs *CalcService) FindById(id int) (*ExpressionUnit, error) {
+func (cs *CalcService) FindById(id int) (*resp.ExpressionUnit, error) {
 	cs.mutex.RLock()
 	defer cs.mutex.RUnlock()
 
@@ -90,10 +90,10 @@ func (cs *CalcService) FindById(id int) (*ExpressionUnit, error) {
 	if !found {
 		return nil, fmt.Errorf("id %q not found", id)
 	}
-	return &ExpressionUnit{Expr: *expr}, nil
+	return &resp.ExpressionUnit{Expr: *expr}, nil
 }
 
-func (cs *CalcService) GetTask() *models.Task {
+func (cs *CalcService) GetTask() *resp.Task {
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
 
@@ -108,7 +108,7 @@ func (cs *CalcService) GetTask() *models.Task {
 		5*time.Second + newtask.OperationTime,
 	)
 
-	go func(task models.Task) {
+	go func(task resp.Task) {
 		cs.mutex.Lock()
 		timeout, found := cs.timeoutsTable[task.ID]
 		cs.mutex.Unlock()
@@ -166,7 +166,7 @@ func (cs *CalcService) PutResult(id int, value float64) error {
 	return nil
 }
 
-func (cs *CalcService) extractTasksFromExpression(expr *Expression) int {
+func (cs *CalcService) extractTasksFromExpression(expr *resp.Expression) int {
 	var taskCount int
 	el := expr.Front()
 	for el != nil {
@@ -188,7 +188,7 @@ func (cs *CalcService) extractTasksFromExpression(expr *Expression) int {
 			continue
 		}
 
-		task := new(models.Task)
+		task := new(resp.Task)
 		task.ID = cs.taskID
 		cs.taskID++
 		taskToken := TaskToken{ID: task.ID}

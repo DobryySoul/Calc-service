@@ -7,7 +7,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/DobryySoul/Calc-service/internal/http/models"
+	"github.com/DobryySoul/Calc-service/internal/http/models/req"
+	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 	"github.com/DobryySoul/Calc-service/internal/service"
 	"go.uber.org/zap"
 )
@@ -61,9 +62,9 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var (
-		expr          models.Expression
-		responseError models.ResponseError
-		answer        models.Created
+		expr          req.ExpressionRequest
+		responseError resp.ResponseError
+		answer        resp.Created
 	)
 
 	if !slices.Contains(r.Header["Content-Type"], "application/json") {
@@ -123,7 +124,7 @@ func (cs *calcStates) listAll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var responseError models.ResponseError
+	var responseError resp.ResponseError
 
 	list := cs.CalcService.ListAll()
 	cs.log.Info("received list of expressions", zap.Int("length", len(list.Exprs)))
@@ -144,7 +145,7 @@ func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var responseError models.ResponseError
+	var responseError resp.ResponseError
 
 	id := r.PathValue("id")
 	Id, err := strconv.Atoi(id)
@@ -186,7 +187,7 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var responseError models.ResponseError
+	var responseError resp.ResponseError
 
 	cs.log.Info("fetching new task from queue")
 
@@ -204,7 +205,7 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 	cs.log.Info("task fetched", zap.Int("task_id", newTask.ID))
 
 	answer := struct {
-		Task *models.Task `json:"task"`
+		Task *resp.Task `json:"task"`
 	}{
 		Task: newTask,
 	}
@@ -221,7 +222,7 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("task sent successfully", zap.Int("task_id", newTask.ID))
+	cs.log.Info("task sent successfully", zap.Int("task_id", newTask.ID), zap.String("task", newTask.Arg1+" "+newTask.Operation+" "+newTask.Arg2))
 }
 
 func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
@@ -230,8 +231,8 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var (
-		res           models.Result
-		responseError models.ResponseError
+		res           req.Result
+		responseError resp.ResponseError
 	)
 
 	err := json.NewDecoder(r.Body).Decode(&res)

@@ -6,7 +6,7 @@ package calculation_test
 // 	"github.com/DobryySoul/Calc-service/pkg/calculation"
 // )
 
-// func TestCalc(t *testing.T) {
+// func TestRPN(t *testing.T) {
 // 	testCasesSuccess := []struct {
 // 		name           string
 // 		expression     string

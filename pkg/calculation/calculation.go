@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-func NewRPN(expression string) ([]string, error) {
+func RPN(expression string) ([]string, error) {
 	tokens := createToken(expression)
 	output, err := convertingAnExpression(tokens)
 	if err != nil {
@@ -81,42 +81,4 @@ func convertingAnExpression(tokens []string) ([]string, error) {
 	}
 
 	return output, nil
-}
-
-func Counting(tokens []string) (float64, error) {
-	var stack []float64
-
-	for _, token := range tokens {
-		if value, err := strconv.ParseFloat(token, 64); err == nil {
-			stack = append(stack, value)
-		} else {
-			if len(stack) < 2 {
-				return 0, ErrInvalidExpression
-			}
-			b, a := stack[len(stack)-1], stack[len(stack)-2]
-			stack = stack[:len(stack)-2]
-
-			switch token {
-			case "+":
-				stack = append(stack, a+b)
-			case "-":
-				stack = append(stack, a-b)
-			case "*":
-				stack = append(stack, a*b)
-			case "/":
-				if b == 0 {
-					return 0, ErrDivisionByZero
-				}
-				stack = append(stack, a/b)
-			default:
-				return 0, ErrUnknownOperator
-			}
-		}
-	}
-
-	if len(stack) != 1 {
-		return 0, ErrInvalidExpression
-	}
-
-	return stack[0], nil
 }

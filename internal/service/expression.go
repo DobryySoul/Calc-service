@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 	"github.com/DobryySoul/Calc-service/pkg/calculation"
 )
 
@@ -24,50 +25,39 @@ type Token interface {
 	Type() int
 }
 
-type NumToken struct {
-	Value float64
-}
+type (
+	NumToken struct {
+		Value float64
+	}
+	OpToken struct {
+		Value string
+	}
+	TaskToken struct {
+		ID int
+	}
+)
 
 func (num NumToken) Type() int {
 	return TokenTypeNumber
-}
-
-type OpToken struct {
-	Value string
 }
 
 func (num OpToken) Type() int {
 	return TokenTypeOperation
 }
 
-type TaskToken struct {
-	ID int
-}
-
 func (num TaskToken) Type() int {
 	return TokenTypeTask
 }
 
-type Expression struct {
-	*list.List
-	ID         int    `json:"id"`
-	Status     string `json:"status"`
-	Result     string `json:"result"`
-	Expression string `json:"expression"`
+type ExprElement struct {
+	ID  int
+	Ptr *list.Element
 }
 
-type ExpressionUnit struct {
-	Expr Expression `json:"expression"`
-}
-
-type ExpressionList struct {
-	Exprs []Expression `json:"expressions"`
-}
-
-func NewExpression(id int, expr string) (*Expression, error) {
-	rpn, err := calculation.NewRPN(expr)
+func NewExpression(id int, expr string) (*resp.Expression, error) {
+	rpn, err := calculation.RPN(expr)
 	if err != nil {
-		expression := Expression{
+		expression := resp.Expression{
 			List:       list.New(),
 			ID:         id,
 			Status:     StatusError,
@@ -78,7 +68,7 @@ func NewExpression(id int, expr string) (*Expression, error) {
 	}
 
 	if len(rpn) == 1 {
-		expression := Expression{
+		expression := resp.Expression{
 			List:       list.New(),
 			ID:         id,
 			Status:     StatusDone,
@@ -88,7 +78,7 @@ func NewExpression(id int, expr string) (*Expression, error) {
 		return &expression, nil
 	}
 
-	expression := Expression{
+	expression := resp.Expression{
 		List:       list.New(),
 		ID:         id,
 		Status:     StatusPending,
@@ -107,9 +97,4 @@ func NewExpression(id int, expr string) (*Expression, error) {
 		}
 	}
 	return &expression, nil
-}
-
-type ExprElement struct {
-	ID  int
-	Ptr *list.Element
 }

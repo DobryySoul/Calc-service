@@ -9,14 +9,15 @@ import (
 
 	"github.com/DobryySoul/Calc-service/internal/app/agent/config"
 	"github.com/DobryySoul/Calc-service/internal/http/client"
-	"github.com/DobryySoul/Calc-service/internal/http/models"
+	"github.com/DobryySoul/Calc-service/internal/http/models/req"
+	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 )
 
 type Application struct {
 	cfg     config.Config
 	client  *client.Client
-	tasks   chan models.Task
-	results chan models.Result
+	tasks   chan resp.Task
+	results chan req.Result
 	ready   chan struct{}
 }
 
@@ -39,8 +40,8 @@ func NewApplicationAgent(cfg *config.Config) *Application {
 	return &Application{
 		cfg:     *cfg,
 		client:  &client.Client{Host: cfg.Host, Port: cfg.Port},
-		tasks:   make(chan models.Task),
-		results: make(chan models.Result),
+		tasks:   make(chan resp.Task),
+		results: make(chan req.Result),
 		ready:   make(chan struct{}, cfg.ComputingPOWER),
 	}
 }
@@ -75,7 +76,7 @@ func (app *Application) Run(ctx context.Context) int {
 
 }
 
-func runWorker(tasks <-chan models.Task, results chan<- models.Result, ready chan<- struct{}, wg *sync.WaitGroup) {
+func runWorker(tasks <-chan resp.Task, results chan<- req.Result, ready chan<- struct{}, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {
@@ -90,13 +91,13 @@ func runWorker(tasks <-chan models.Task, results chan<- models.Result, ready cha
 		arg1, err1 := strconv.ParseFloat(task.Arg1, 64)
 		arg2, err2 := strconv.ParseFloat(task.Arg2, 64)
 		if err1 != nil || err2 != nil {
-			results <- models.Result{
+			results <- req.Result{
 				ID:    task.ID,
 				Value: "Некорректные аргументы",
 			}
 		} else {
 			value := ops[task.Operation](arg1, arg2)
-			results <- models.Result{
+			results <- req.Result{
 				ID:    task.ID,
 				Value: fmt.Sprintf("%f", value),
 			}
