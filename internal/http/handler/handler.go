@@ -15,7 +15,13 @@ import (
 type Middleware func(http.Handler) http.Handler
 
 const (
-	invalidValue = "invalid value"
+	invalidValue       = "invalid value"
+	invalidContentType = "invalid content type"
+	invalidExpression  = "invalid expression"
+	invalidId          = "invalid id"
+	expressionNotFound = "expression not found"
+	emptyQueue         = "no tasks in queue"
+	invalidResultInput = "invalid result"
 )
 
 type calcStates struct {
@@ -63,11 +69,11 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	if !slices.Contains(r.Header["Content-Type"], "application/json") {
 		w.WriteHeader(http.StatusInternalServerError)
 
-		responseError.Error = "invalid content type"
+		responseError.Error = invalidContentType
 
 		err := json.NewEncoder(w).Encode(responseError)
 		if err == nil {
-			cs.log.Error("could not encode error", zap.Error(err))
+			cs.log.Error("can't encode error", zap.Error(err))
 		}
 		return
 	}
@@ -76,7 +82,7 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
-		responseError.Error = err.Error()
+		responseError.Error = invalidExpression
 
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
@@ -89,7 +95,7 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
-		responseError.Error = "could not add expression"
+		responseError.Error = invalidExpression
 
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
@@ -119,10 +125,10 @@ func (cs *calcStates) listAll(w http.ResponseWriter, r *http.Request) {
 
 	var responseError models.ResponseError
 
-	lst := cs.CalcService.ListAll()
-	cs.log.Info("received list of expressions", zap.Int("length", len(lst.Exprs)))
+	list := cs.CalcService.ListAll()
+	cs.log.Info("received list of expressions", zap.Int("length", len(list.Exprs)))
 
-	err := json.NewEncoder(w).Encode(&lst)
+	err := json.NewEncoder(w).Encode(&list)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
@@ -143,19 +149,21 @@ func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	Id, err := strconv.Atoi(id)
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.WriteHeader(http.StatusInternalServerError)
 
-		responseError.Error = err.Error()
+		responseError.Error = invalidId
 
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
+
 	expr, err := cs.CalcService.FindById(Id)
 	if err != nil {
-		cs.log.Error("could not find expression by id", zap.Int("id", Id), zap.Error(err))
+		cs.log.Error("expression not found by id", zap.Int("id", Id), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 
-		responseError.Error = err.Error()
+		responseError.Error = expressionNotFound
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
@@ -164,7 +172,11 @@ func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
 	err = encoder.Encode(&expr)
 	if err != nil {
 		cs.log.Error("could not encode expression", zap.Int("id", Id), zap.Error(err))
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+
+		responseError.Error = err.Error()
+
+		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
 }
@@ -176,19 +188,20 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 
 	var responseError models.ResponseError
 
-	cs.log.Info("Fetching new task from queue")
+	cs.log.Info("fetching new task from queue")
 
 	newTask := cs.CalcService.GetTask()
 	if newTask == nil {
-		cs.log.Warn("No tasks in queue")
+		cs.log.Warn("no tasks in queue")
 		w.WriteHeader(http.StatusNotFound)
 
-		responseError.Error = "No tasks in queue"
+		responseError.Error = emptyQueue
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
 
-	cs.log.Info("Task fetched", zap.Int("task_id", newTask.ID))
+	cs.log.Info("task fetched", zap.Int("task_id", newTask.ID))
 
 	answer := struct {
 		Task *models.Task `json:"task"`
@@ -199,15 +212,16 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	err := encoder.Encode(&answer)
 	if err != nil {
-		cs.log.Error("Error encoding task response", zap.Error(err))
+		cs.log.Error("error encoding task response", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 
 		responseError.Error = err.Error()
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
 
-	cs.log.Info("Task sent successfully", zap.Int("task_id", newTask.ID))
+	cs.log.Info("task sent successfully", zap.Int("task_id", newTask.ID))
 }
 
 func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
@@ -222,10 +236,11 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&res)
 	if err != nil {
-		cs.log.Error("could not decode result", zap.Error(err))
+		cs.log.Error("can't decode result", zap.Error(err))
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
-		responseError.Error = err.Error()
+		responseError.Error = invalidResultInput
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
@@ -234,28 +249,33 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 
 	value, err := strconv.ParseFloat(res.Value, 64)
 	if err != nil {
-		cs.log.Error("could not parse value", zap.String("value", res.Value), zap.Error(err))
+		cs.log.Error("can't parse value", zap.String("value", res.Value), zap.Error(err))
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
 		responseError.Error = invalidValue
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
 
 	if err = cs.CalcService.PutResult(res.ID, value); err != nil {
-		cs.log.Error("could not put result", zap.Int("id", res.ID), zap.Error(err))
+		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 
-		responseError.Error = "could not put result"
+		responseError.Error = err.Error()
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
 
+	cs.log.Info("result put successfully", zap.Int("id", res.ID), zap.String("value", res.Value))
+
 	if err = json.NewEncoder(w).Encode(res); err != nil {
-		cs.log.Error("could not encode result", zap.Int("id", res.ID), zap.Error(err))
+		cs.log.Error("can't encode result", zap.Int("id", res.ID), zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 
-		responseError.Error = "could not encode result"
+		responseError.Error = err.Error()
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
