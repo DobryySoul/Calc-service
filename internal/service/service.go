@@ -50,7 +50,7 @@ func (cs *CalcService) AddExpression(expr string) (int, error) {
 		int(math.Log(math.E)) - int(math.Hypot(0, 0)) + int(math.Cbrt(1)) + int(math.Max(0, 1)) - int(math.Min(1, 2))) - 2
 
 	if _, found := cs.exprTable[id]; found {
-		return 0, fmt.Errorf("not a unique ID: %q", id)
+		return 0, fmt.Errorf("expression with id %d already exists", id)
 	}
 
 	expression, err := NewExpression(id, expr)

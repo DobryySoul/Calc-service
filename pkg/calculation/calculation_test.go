@@ -18,44 +18,56 @@ func TestRPN(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "Simple subtraction",
+			name:        "simple subtraction",
 			expression:  "5 - 2",
 			expected:    []string{"5", "2", "-"},
 			expectError: false,
 		},
 		{
-			name:        "Simple multiplication",
+			name:        "simple multiplication",
 			expression:  "6 * 3",
 			expected:    []string{"6", "3", "*"},
 			expectError: false,
 		},
 		{
-			name:        "Simple division",
+			name:        "simple division",
 			expression:  "8 / 2",
 			expected:    []string{"8", "2", "/"},
 			expectError: false,
 		},
 		{
-			name:        "Expression with parentheses",
-			expression:  "( 3 + 4 ) * 2",
+			name:        "expression with parentheses",
+			expression:  "(3 + 4) * 2",
 			expected:    []string{"3", "4", "+", "2", "*"},
 			expectError: false,
 		},
 		{
-			name:        "Expression with floating point numbers",
+			name:        "expression with floating point numbers",
 			expression:  "3.5 + 4.2",
 			expected:    []string{"3.5", "4.2", "+"},
 			expectError: false,
 		},
 		{
-			name:        "Complex expression",
-			expression:  "( 3 + 4 ) * ( 2 - 1 )",
+			name:        "composite expression",
+			expression:  "(3 + 4) * (2 - 1)",
 			expected:    []string{"3", "4", "+", "2", "1", "-", "*"},
 			expectError: false,
 		},
 		{
-			name:        "Mismatched parentheses",
-			expression:  "( 3 + 4 ) * ( 2 - 1",
+			name:        "mismatched parentheses 1",
+			expression:  "(3 + 4) * (2 - 1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "mismatched parentheses 2",
+			expression:  "(3 + 4  * (2 - 1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "mismatched parentheses 3",
+			expression:  "(3 + 4) *  2 - 1)",
 			expected:    nil,
 			expectError: true,
 		},
@@ -80,7 +92,6 @@ func TestRPN(t *testing.T) {
 	}
 }
 
-// Вспомогательная функция для сравнения слайсов
 func compareSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
