@@ -19,20 +19,17 @@ func TestRPN(t *testing.T) {
 		},
 		{
 			name:        "simple subtraction",
-			name:        "simple subtraction",
 			expression:  "5 - 2",
 			expected:    []string{"5", "2", "-"},
 			expectError: false,
 		},
 		{
 			name:        "simple multiplication",
-			name:        "simple multiplication",
 			expression:  "6 * 3",
 			expected:    []string{"6", "3", "*"},
 			expectError: false,
 		},
 		{
-			name:        "simple division",
 			name:        "simple division",
 			expression:  "8 / 2",
 			expected:    []string{"8", "2", "/"},
@@ -45,7 +42,6 @@ func TestRPN(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "expression with floating point numbers",
 			name:        "expression with floating point numbers",
 			expression:  "3.5 + 4.2",
 			expected:    []string{"3.5", "4.2", "+"},
