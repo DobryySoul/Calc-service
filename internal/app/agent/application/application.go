@@ -7,14 +7,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/app/agent/config"
+	// "github.com/DobryySoul/Calc-service/internal/app/agent/config"
+	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/client"
 	"github.com/DobryySoul/Calc-service/internal/http/models/req"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 )
 
 type Application struct {
-	cfg     config.Config
+	cfg     configs.Config
 	client  *client.Client
 	tasks   chan resp.Task
 	results chan req.Result
@@ -36,10 +37,14 @@ func subtraction(a, b float64) float64    { return a - b }
 func multiplication(a, b float64) float64 { return a * b }
 func division(a, b float64) float64       { return a / b }
 
-func NewApplicationAgent(cfg *config.Config) *Application {
+func NewApplicationAgent(cfg *configs.Config) *Application {
+	port, err := strconv.Atoi(cfg.Port)
+	if err != nil {
+		panic(err)
+	}
 	return &Application{
 		cfg:     *cfg,
-		client:  &client.Client{Host: cfg.Host, Port: cfg.Port},
+		client:  &client.Client{Host: cfg.Host, Port: port},
 		tasks:   make(chan resp.Task),
 		results: make(chan req.Result),
 		ready:   make(chan struct{}, cfg.ComputingPOWER),
@@ -53,7 +58,7 @@ func (app *Application) Run(ctx context.Context) int {
 	defer close(app.tasks)
 	defer wg.Wait()
 
-	for i := 0; i < app.cfg.ComputingPOWER; i++ {
+	for range app.cfg.ComputingPOWER {
 		wg.Add(1)
 		go runWorker(app.tasks, app.results, app.ready, &wg)
 	}

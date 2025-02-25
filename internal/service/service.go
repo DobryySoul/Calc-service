@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 	"github.com/DobryySoul/Calc-service/internal/timeout"
 )
@@ -22,7 +23,7 @@ type CalcService struct {
 	mutex         sync.RWMutex
 }
 
-func NewCalcService(cfg config.Config) *CalcService {
+func NewCalcService(cfg configs.Config) *CalcService {
 	CS := &CalcService{
 		exprTable:     make(map[int]*resp.Expression),
 		taskTable:     make(map[int]ExprElement),
@@ -30,10 +31,10 @@ func NewCalcService(cfg config.Config) *CalcService {
 		timeoutsTable: make(map[int]*timeout.Timeout),
 	}
 
-	CS.timeTable["+"] = cfg.TIME_ADDITION
-	CS.timeTable["-"] = cfg.TIME_SUBTRACT
-	CS.timeTable["*"] = cfg.TIME_MULTIPLY
-	CS.timeTable["/"] = cfg.TIME_SUBTRACT
+	CS.timeTable["+"] = cfg.Duration.TIME_ADDITION
+	CS.timeTable["-"] = cfg.Duration.TIME_SUBTRACT
+	CS.timeTable["*"] = cfg.Duration.TIME_MULTIPLY
+	CS.timeTable["/"] = cfg.Duration.TIME_DIVISION
 
 	return CS
 }

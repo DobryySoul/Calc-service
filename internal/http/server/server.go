@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 
-	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
 	"github.com/DobryySoul/Calc-service/internal/service"
 	"github.com/DobryySoul/Calc-service/pkg/middleware/logger"
 	"go.uber.org/zap"
 )
 
-func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(context.Context) error, error) {
+func Run(ctx context.Context, logger *zap.Logger, cfg configs.Config) (func(context.Context) error, error) {
 
 	calcService := service.NewCalcService(cfg)
 
@@ -23,16 +23,16 @@ func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(conte
 		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
 
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		addr = "8080"
-	}
+	// addr := os.Getenv("ADDR")
+	// if addr == "" {
+	// 	addr = "8080"
+	// }
 
-	addr = ":" + addr
-	srv := &http.Server{Addr: addr, Handler: muxHandler}
+	// addr = ":" + addr
+	srv := &http.Server{Addr: ":" + cfg.Port, Handler: muxHandler}
 
 	go func() {
-		logger.Info("START SERVER", zap.String("port", addr))
+		logger.Info("START SERVER", zap.String("port", cfg.Port))
 
 		err := srv.ListenAndServe()
 		if err != nil {

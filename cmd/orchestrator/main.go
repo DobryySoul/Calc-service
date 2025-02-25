@@ -6,11 +6,12 @@ import (
 	"os"
 
 	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/application"
-	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
+	"github.com/DobryySoul/Calc-service/internal/configs"
 )
 
 func main() {
-	cfg, err := config.NewConfigForOrchestrator()
+	cfg, err := configs.LoadConfigEnv()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
