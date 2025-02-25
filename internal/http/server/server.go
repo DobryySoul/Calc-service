@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
@@ -11,8 +12,6 @@ import (
 	"github.com/DobryySoul/Calc-service/pkg/middleware/logger"
 	"go.uber.org/zap"
 )
-
-
 
 func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(context.Context) error, error) {
 
@@ -24,10 +23,16 @@ func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(conte
 		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
 
-	srv := &http.Server{Addr: ":8081", Handler: muxHandler}
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = "8080"
+	}
+
+	addr = ":" + addr
+	srv := &http.Server{Addr: addr, Handler: muxHandler}
 
 	go func() {
-		logger.Info("START SERVER ON PORT 8081")
+		logger.Info("START SERVER", zap.String("port", addr))
 
 		err := srv.ListenAndServe()
 		if err != nil {

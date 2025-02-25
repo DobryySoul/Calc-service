@@ -14,20 +14,13 @@ type Config struct {
 }
 
 func ParseFlags() (*string, *int) {
-	flag.Parse()
-
+	
 	var (
 		host = flag.String("h", "localhost", "The host name of the orchestrator")
 		port = flag.Int("p", 8081, "Port of the orchestrator")
 	)
-
-	if *host == "" {
-		*host = "localhost"
-	}
-	if *port == 0 {
-		*port = 8081
-		fmt.Printf("Incorrect port %d, using default value 8081", *port)
-	}
+	
+	flag.Parse()
 
 	return host, port
 }

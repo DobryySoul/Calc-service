@@ -37,7 +37,7 @@ func TestRPN(t *testing.T) {
 		},
 		{
 			name:        "expression with parentheses",
-			expression:  "( 3 + 4 ) * 2",
+			expression:  "(3 + 4) * 2",
 			expected:    []string{"3", "4", "+", "2", "*"},
 			expectError: false,
 		},
@@ -48,14 +48,26 @@ func TestRPN(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:        "complex expression",
-			expression:  "( 3 + 4 ) * ( 2 - 1 )",
+			name:        "composite expression",
+			expression:  "(3 + 4) * (2 - 1)",
 			expected:    []string{"3", "4", "+", "2", "1", "-", "*"},
 			expectError: false,
 		},
 		{
-			name:        "mismatched parentheses",
-			expression:  "( 3 + 4 ) * ( 2 - 1",
+			name:        "mismatched parentheses 1",
+			expression:  "(3 + 4) * (2 - 1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "mismatched parentheses 2",
+			expression:  "(3 + 4  * (2 - 1",
+			expected:    nil,
+			expectError: true,
+		},
+		{
+			name:        "mismatched parentheses 3",
+			expression:  "(3 + 4) *  2 - 1)",
 			expected:    nil,
 			expectError: true,
 		},
@@ -80,7 +92,6 @@ func TestRPN(t *testing.T) {
 	}
 }
 
-// Вспомогательная функция для сравнения слайсов
 func compareSlices(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
