@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
 	"github.com/DobryySoul/Calc-service/internal/service"
@@ -23,12 +22,6 @@ func Run(ctx context.Context, logger *zap.Logger, cfg configs.Config) (func(cont
 		return nil, fmt.Errorf("server initialization error: %w", err)
 	}
 
-	// addr := os.Getenv("ADDR")
-	// if addr == "" {
-	// 	addr = "8080"
-	// }
-
-	// addr = ":" + addr
 	srv := &http.Server{Addr: ":" + cfg.Port, Handler: muxHandler}
 
 	go func() {
