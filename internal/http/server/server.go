@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/DobryySoul/Calc-service/internal/configs"
+	"github.com/DobryySoul/Calc-service/internal/config"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
 	"github.com/DobryySoul/Calc-service/internal/service"
 	"github.com/DobryySoul/Calc-service/pkg/middleware/logger"
 	"go.uber.org/zap"
 )
 
-func Run(ctx context.Context, logger *zap.Logger, cfg configs.Config) (func(context.Context) error, error) {
+func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(context.Context) error, error) {
 
 	calcService := service.NewCalcService(cfg)
 

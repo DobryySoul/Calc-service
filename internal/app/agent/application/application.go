@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/configs"
+	"github.com/DobryySoul/Calc-service/internal/config"
 	"github.com/DobryySoul/Calc-service/internal/http/client"
 	"github.com/DobryySoul/Calc-service/internal/http/models/req"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
@@ -16,7 +16,7 @@ import (
 )
 
 type Application struct {
-	cfg     configs.Config
+	cfg     config.Config
 	client  *client.Client
 	tasks   chan resp.Task
 	results chan req.Result
@@ -40,7 +40,7 @@ func subtraction(a, b float64) float64    { return a - b }
 func multiplication(a, b float64) float64 { return a * b }
 func division(a, b float64) float64       { return a / b }
 
-func NewApplicationAgent(cfg *configs.Config) *Application {
+func NewApplicationAgent(cfg *config.Config) *Application {
 	logger := logger.SetupLogger()
 
 	port, err := strconv.Atoi(cfg.Port)

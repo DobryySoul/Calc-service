@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DobryySoul/Calc-service/internal/configs"
+	"github.com/DobryySoul/Calc-service/internal/config"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 	"github.com/DobryySoul/Calc-service/internal/timeout"
 )
@@ -22,7 +22,7 @@ type CalcService struct {
 	mutex         sync.RWMutex
 }
 
-func NewCalcService(cfg configs.Config) *CalcService {
+func NewCalcService(cfg config.Config) *CalcService {
 	CS := &CalcService{
 		exprTable:     make(map[int]*resp.Expression),
 		taskTable:     make(map[int]ExprElement),

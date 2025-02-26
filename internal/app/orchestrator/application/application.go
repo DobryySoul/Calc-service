@@ -5,18 +5,18 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/DobryySoul/Calc-service/internal/configs"
+	"github.com/DobryySoul/Calc-service/internal/config"
 	"github.com/DobryySoul/Calc-service/internal/http/server"
 	"github.com/DobryySoul/Calc-service/pkg/logger"
 	"go.uber.org/zap"
 )
 
 type Application struct {
-	cfg    configs.Config
+	cfg    config.Config
 	logger *zap.Logger
 }
 
-func NewApplicationOrchestrator(cfg *configs.Config) *Application {
+func NewApplicationOrchestrator(cfg *config.Config) *Application {
 	logger := logger.SetupLogger()
 	return &Application{cfg: *cfg, logger: logger}
 }

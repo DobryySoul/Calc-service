@@ -6,11 +6,11 @@ import (
 	"os"
 
 	"github.com/DobryySoul/Calc-service/internal/app/agent/application"
-	"github.com/DobryySoul/Calc-service/internal/configs"
+	"github.com/DobryySoul/Calc-service/internal/config"
 )
 
 func main() {
-	cfg, err := configs.LoadConfigEnv()
+	cfg, err := config.LoadConfigEnv()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
