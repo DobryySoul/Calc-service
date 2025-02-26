@@ -60,48 +60,49 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
-
+	
 	var (
 		expr          req.ExpressionRequest
 		responseError resp.ResponseError
 		answer        resp.Created
 	)
-
+	
 	if !slices.Contains(r.Header["Content-Type"], "application/json") {
 		w.WriteHeader(http.StatusInternalServerError)
-
+		
 		responseError.Error = invalidContentType
-
+		
 		err := json.NewEncoder(w).Encode(responseError)
 		if err == nil {
 			cs.log.Error("can't encode error", zap.Error(err))
 		}
 		return
 	}
-
+	
 	err := json.NewDecoder(r.Body).Decode(&expr)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-
+		
 		responseError.Error = invalidExpression
-
+		
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
-
+	
 	id, err := cs.CalcService.AddExpression(expr.Expression)
-
+	
 	cs.log.Info("received expression", zap.Int("id", id), zap.String("expression", expr.Expression))
-
+	
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-
+		
 		responseError.Error = invalidExpression
-
+		
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
-
+	
+	w.WriteHeader(http.StatusCreated)
 	answer.Id = id
 
 	cs.log.Info("sent answer", zap.Int("id", answer.Id))
@@ -116,7 +117,6 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
 }
 
 func (cs *calcStates) listAll(w http.ResponseWriter, r *http.Request) {
