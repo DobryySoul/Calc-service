@@ -7,7 +7,6 @@ import (
 
 	"github.com/DobryySoul/Calc-service/internal/app/agent/application"
 	"github.com/DobryySoul/Calc-service/internal/configs"
-	// "github.com/DobryySoul/Calc-service/internal/app/agent/config"
 )
 
 func main() {

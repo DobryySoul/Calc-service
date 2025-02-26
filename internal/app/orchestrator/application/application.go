@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 
-	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/server"
 	"github.com/DobryySoul/Calc-service/pkg/logger"

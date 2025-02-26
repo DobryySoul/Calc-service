@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/DobryySoul/Calc-service/internal/app/orchestrator/application"
-	// "github.com/DobryySoul/Calc-service/internal/app/orchestrator/config"
 	"github.com/DobryySoul/Calc-service/internal/configs"
 )
 

@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
-	// "github.com/DobryySoul/Calc-service/internal/app/agent/config"
 	"github.com/DobryySoul/Calc-service/internal/configs"
 	"github.com/DobryySoul/Calc-service/internal/http/client"
 	"github.com/DobryySoul/Calc-service/internal/http/models/req"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
+	"github.com/DobryySoul/Calc-service/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Application struct {
@@ -20,6 +21,8 @@ type Application struct {
 	tasks   chan resp.Task
 	results chan req.Result
 	ready   chan struct{}
+	wg      sync.WaitGroup
+	logger  *zap.Logger
 }
 
 var ops map[string]func(float64, float64) float64
@@ -38,6 +41,8 @@ func multiplication(a, b float64) float64 { return a * b }
 func division(a, b float64) float64       { return a / b }
 
 func NewApplicationAgent(cfg *configs.Config) *Application {
+	logger := logger.SetupLogger()
+
 	port, err := strconv.Atoi(cfg.Port)
 	if err != nil {
 		panic(err)
@@ -48,19 +53,20 @@ func NewApplicationAgent(cfg *configs.Config) *Application {
 		tasks:   make(chan resp.Task),
 		results: make(chan req.Result),
 		ready:   make(chan struct{}, cfg.ComputingPOWER),
+		wg:      sync.WaitGroup{},
+		logger:  logger,
 	}
 }
 
 func (app *Application) Run(ctx context.Context) int {
-	var wg sync.WaitGroup
-
 	defer close(app.results)
 	defer close(app.tasks)
-	defer wg.Wait()
+	defer app.wg.Wait()
 
-	for range app.cfg.ComputingPOWER {
-		wg.Add(1)
-		go runWorker(app.tasks, app.results, app.ready, &wg)
+	for i := 1; i <= app.cfg.ComputingPOWER; i++ {
+		app.wg.Add(1)
+		app.logger.Info("Worker has been started", zap.Int("worker", i))
+		go runWorker(app.tasks, app.results, app.ready, &app.wg)
 	}
 
 	for {
