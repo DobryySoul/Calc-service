@@ -68,7 +68,7 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	)
 	
 	if !slices.Contains(r.Header["Content-Type"], "application/json") {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		
 		responseError.Error = invalidContentType
 		
@@ -247,8 +247,6 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cs.log.Info("received result", zap.Int("id", res.ID), zap.Float64("value", res.Value))
-
-	// value := res.Value
 
 	if err = cs.CalcService.PutResult(res.ID, res.Value); err != nil {
 		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
