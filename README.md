@@ -150,7 +150,8 @@ export PORT=порт
 ![](docs/GET/api/v1/expressions/status200.png)
 
 
-#### `/api/v1/expressions/:id`
+> [!IMPORTANT]
+> #### `/api/v1/expressions/:id`.
 
 
 - `200`: Успешно полученное выражение по идентификатору id:
