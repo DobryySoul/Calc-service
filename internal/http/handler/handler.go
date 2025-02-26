@@ -246,20 +246,11 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("received result", zap.Int("id", res.ID), zap.String("value", res.Value))
+	cs.log.Info("received result", zap.Int("id", res.ID), zap.Float64("value", res.Value))
 
-	value, err := strconv.ParseFloat(res.Value, 64)
-	if err != nil {
-		cs.log.Error("can't parse value", zap.String("value", res.Value), zap.Error(err))
-		w.WriteHeader(http.StatusUnprocessableEntity)
+	// value := res.Value
 
-		responseError.Error = invalidValue
-
-		_ = json.NewEncoder(w).Encode(responseError)
-		return
-	}
-
-	if err = cs.CalcService.PutResult(res.ID, value); err != nil {
+	if err = cs.CalcService.PutResult(res.ID, res.Value); err != nil {
 		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 
@@ -269,7 +260,7 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("result put successfully", zap.Int("id", res.ID), zap.String("value", res.Value))
+	cs.log.Info("result put successfully", zap.Int("id", res.ID), zap.Float64("value", res.Value))
 
 	if err = json.NewEncoder(w).Encode(res); err != nil {
 		cs.log.Error("can't encode result", zap.Int("id", res.ID), zap.Error(err))

@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -104,13 +103,13 @@ func runWorker(tasks <-chan resp.Task, results chan<- req.Result, ready chan<- s
 		if err1 != nil || err2 != nil {
 			results <- req.Result{
 				ID:    task.ID,
-				Value: "Некорректные аргументы",
+				Value: 0.0,
 			}
 		} else {
 			value := ops[task.Operation](arg1, arg2)
 			results <- req.Result{
 				ID:    task.ID,
-				Value: fmt.Sprintf("%f", value),
+				Value: value,
 			}
 		}
 	}
