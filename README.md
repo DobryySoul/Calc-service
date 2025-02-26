@@ -140,7 +140,7 @@ export PORT=порт
 }
 ```
 
-- `/api/v1/expressions`
+#### `/api/v1/expressions`
 
 ![](docs/POST/api/v1/calculate/status422.png)
 
