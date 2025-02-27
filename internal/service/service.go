@@ -109,7 +109,7 @@ func (cs *CalcService) FindById(id int) (*resp.ExpressionUnit, error) {
 }
 
 func (cs *CalcService) GetTask() *resp.Task {
-	const Timeout = 10 * time.Second
+	const defaultTimeout = 10 * time.Second
 
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
@@ -125,7 +125,7 @@ func (cs *CalcService) GetTask() *resp.Task {
 	cs.logger.Info("task retrieved", zap.Int("task_id", newtask.ID))
 
 	cs.timeoutsTable[newtask.ID] = timeout.NewTimeout(
-		Timeout + newtask.OperationTime,
+		defaultTimeout + newtask.OperationTime,
 	)
 
 	go func(task resp.Task) {
