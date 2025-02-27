@@ -5,14 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/DobryySoul/Calc-service/internal/http/models/req"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
-	"github.com/DobryySoul/Calc-service/pkg/calculation"
 )
 
 type Client struct {
@@ -58,14 +56,7 @@ func (client *Client) GetTask() *resp.Task {
 
 func (client *Client) SendResult(result req.Result) {
 	var buf bytes.Buffer
-	if result.Value == nil { // чекнуть на необходимость строчек 61-68 включительно!
-		result.Value = calculation.ErrDivisionByZero
-	}
-	if value, ok := result.Value.(float64); ok {
-		if math.IsInf(value, 1) || math.IsInf(value, -1) || math.IsNaN(value) {
-			result.Value = calculation.ErrDivisionByZero
-		}
-	}
+
 
 	encoder := json.NewEncoder(&buf)
 	err := encoder.Encode(result)
