@@ -39,7 +39,7 @@ func (a *Application) Run(ctx context.Context) int {
 	<-c
 	shutDownFunc(ctx)
 
-	a.logger.Fatal("Server has been shut down")
+	a.logger.Info("Server has been shut down")
 
 	return 0
 }
