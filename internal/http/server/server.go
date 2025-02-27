@@ -14,7 +14,7 @@ import (
 
 func Run(ctx context.Context, logger *zap.Logger, cfg config.Config) (func(context.Context) error, error) {
 
-	calcService := service.NewCalcService(cfg)
+	calcService := service.NewCalcService(cfg, logger)
 
 	muxHandler, err := newMuxHandler(ctx, logger, calcService)
 	if err != nil {

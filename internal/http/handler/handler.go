@@ -90,14 +90,13 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	id, err := cs.CalcService.AddExpression(expr.Expression)
-	
-	cs.log.Info("received expression", zap.Int("id", id), zap.String("expression", expr.Expression))
-	
+		
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		
-		responseError.Error = invalidExpression
+		responseError.Error = err.Error() // ErrEmptyExpression
 		
+
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
@@ -202,8 +201,6 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("task fetched", zap.Int("task_id", newTask.ID))
-
 	answer := struct {
 		Task *resp.Task `json:"task"`
 	}{
@@ -246,7 +243,7 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("received result", zap.Int("id", res.ID), zap.Float64("value", res.Value))
+	cs.log.Info("received result", zap.Int("id", res.ID), zap.Any("value", res.Value))
 
 	if err = cs.CalcService.PutResult(res.ID, res.Value); err != nil {
 		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
@@ -258,7 +255,7 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cs.log.Info("result put successfully", zap.Int("id", res.ID), zap.Float64("value", res.Value))
+	cs.log.Info("result put successfully", zap.Int("id", res.ID), zap.Any("value", res.Value))
 
 	if err = json.NewEncoder(w).Encode(res); err != nil {
 		cs.log.Error("can't encode result", zap.Int("id", res.ID), zap.Error(err))

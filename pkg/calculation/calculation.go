@@ -1,14 +1,28 @@
 package calculation
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
 func RPN(expression string) ([]string, error) {
-	tokens := createToken(expression)
+	if len(expression) == 0 {
+		return nil, ErrEmptyExpression
+	}
+
+	tokens, err := createToken(expression)
+	if err != nil {
+		return nil, err
+	}
+
 	output, err := convertingAnExpression(tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = evaluateRPN(output)
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +30,7 @@ func RPN(expression string) ([]string, error) {
 	return output, nil
 }
 
-func createToken(expression string) []string {
+func createToken(expression string) ([]string, error) {
 	var tokens []string
 	var number strings.Builder
 
@@ -25,20 +39,29 @@ func createToken(expression string) []string {
 			number.WriteRune(ch)
 		} else {
 			if number.Len() > 0 {
+				if err := validateNumber(number.String()); err != nil {
+					return nil, err
+				}
 				tokens = append(tokens, number.String())
 				number.Reset()
 			}
 			if !unicode.IsSpace(ch) {
+				if !isValidOperator(ch) && ch != '(' && ch != ')' {
+					return nil, ErrInvalidCharacter
+				}
 				tokens = append(tokens, string(ch))
 			}
 		}
 	}
 
 	if number.Len() > 0 {
+		if err := validateNumber(number.String()); err != nil {
+			return nil, err
+		}
 		tokens = append(tokens, number.String())
 	}
 
-	return tokens
+	return tokens, nil
 }
 
 func convertingAnExpression(tokens []string) ([]string, error) {
@@ -64,6 +87,9 @@ func convertingAnExpression(tokens []string) ([]string, error) {
 			}
 			operators = operators[:len(operators)-1]
 		} else {
+			if _, ok := priority[token]; !ok {
+				return nil, ErrUnknownOperator
+			}
 			for len(operators) > 0 && priority[operators[len(operators)-1]] >= priority[token] {
 				output = append(output, operators[len(operators)-1])
 				operators = operators[:len(operators)-1]
@@ -81,4 +107,63 @@ func convertingAnExpression(tokens []string) ([]string, error) {
 	}
 
 	return output, nil
+}
+
+func validateNumber(number string) error {
+	dotCount := 0
+	for _, ch := range number {
+		if ch == '.' {
+			dotCount++
+			if dotCount > 1 {
+				return ErrInvalidNumber
+			}
+		} else if !unicode.IsDigit(ch) {
+			return ErrInvalidNumber
+		}
+	}
+	return nil
+}
+
+func isValidOperator(ch rune) bool {
+	operators := "+-*/"
+	return strings.ContainsRune(operators, ch)
+}
+
+func evaluateRPN(tokens []string) ([]string, error) {
+	var stack []float64
+
+	for _, token := range tokens {
+		if num, err := strconv.ParseFloat(token, 64); err == nil {
+			stack = append(stack, num)
+		} else {
+			if len(stack) < 2 {
+				return nil, errors.New("not enough operands")
+			}
+			b := stack[len(stack)-1]
+			a := stack[len(stack)-2]
+			stack = stack[:len(stack)-2]
+
+			switch token {
+			case "+":
+				stack = append(stack, a+b)
+			case "-":
+				stack = append(stack, a-b)
+			case "*":
+				stack = append(stack, a*b)
+			case "/":
+				if b == 0 {
+					return nil, ErrDivisionByZero
+				}
+				stack = append(stack, a/b)
+			default:
+				return nil, ErrUnknownOperator
+			}
+		}
+	}
+
+	if len(stack) != 1 {
+		return nil, ErrInvalidExpression
+	}
+
+	return []string{strconv.FormatFloat(stack[0], 'f', -1, 64)}, nil
 }

@@ -73,6 +73,9 @@ func (app *Application) Run(ctx context.Context) int {
 		case <-ctx.Done():
 			return 0
 		case res := <-app.results:
+			// if math.IsInf(res.Value.(float64), 1) || math.IsInf(res.Value.(float64), -1) || math.IsNaN(res.Value.(float64)) {
+			// 	res.Value = calculation.ErrDivisionByZero
+			// }
 			app.client.SendResult(res)
 		case <-app.ready:
 			task := app.client.GetTask()

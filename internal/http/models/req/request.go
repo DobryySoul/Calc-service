@@ -1,8 +1,8 @@
 package req
 
 type Result struct {
-	ID    int     `json:"id"`
-	Value float64 `json:"result"`
+	ID    int `json:"id"`
+	Value any `json:"result"`
 }
 
 type ExpressionRequest struct {

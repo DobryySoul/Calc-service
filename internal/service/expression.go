@@ -2,6 +2,7 @@ package service
 
 import (
 	"container/list"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -57,44 +58,52 @@ type ExprElement struct {
 func NewExpression(id int, expr string) (*resp.Expression, error) {
 	rpn, err := calculation.RPN(expr)
 	if err != nil {
-		expression := resp.Expression{
-			List:       list.New(),
+		return &resp.Expression{
 			ID:         id,
 			Status:     StatusError,
 			Result:     "",
 			Expression: expr,
-		}
-		return &expression, err
+		}, err
 	}
 
-	if len(rpn) == 1 {
-		expression := resp.Expression{
-			List:       list.New(),
-			ID:         id,
-			Status:     StatusDone,
-			Result:     rpn[0],
-			Expression: expr,
-		}
-		return &expression, nil
-	}
-
-	expression := resp.Expression{
+	expression := &resp.Expression{
 		List:       list.New(),
 		ID:         id,
-		Status:     StatusPending,
+		Status:     StatusError,
 		Result:     "",
 		Expression: expr,
 	}
+
+	if rpn == nil {
+		return expression, nil
+	}
+
+	if len(rpn) == 1 {
+		expression.Status = StatusDone
+		expression.Result = rpn[0]
+		return expression, nil
+	}
+
+	expression.Status = StatusPending
 	for _, val := range rpn {
+		if val == "" {
+			continue
+		}
 		if strings.Contains("-+*/", val) {
-			expression.PushBack(OpToken{val})
+			expression.List.PushBack(OpToken{val})
 		} else {
 			num, err := strconv.ParseFloat(val, 64)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("parse float error: %w", err)
 			}
-			expression.PushBack(NumToken{num})
+			expression.List.PushBack(NumToken{num})
 		}
 	}
-	return &expression, nil
+
+	if err == calculation.ErrDivisionByZero {
+		expression.Status = StatusError
+		expression.Result = "Division by zero error"
+	}
+
+	return expression, nil
 }
