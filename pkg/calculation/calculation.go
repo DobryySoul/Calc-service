@@ -1,7 +1,6 @@
 package calculation
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"unicode"
@@ -137,7 +136,7 @@ func evaluateRPN(tokens []string) ([]string, error) {
 			stack = append(stack, num)
 		} else {
 			if len(stack) < 2 {
-				return nil, errors.New("not enough operands")
+				return nil, ErrNotEnoughOperands
 			}
 			b := stack[len(stack)-1]
 			a := stack[len(stack)-2]

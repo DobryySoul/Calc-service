@@ -5,7 +5,7 @@ import "errors"
 var (
 	ErrInvalidExpression     = errors.New("expression is not valid")
 	ErrDivisionByZero        = errors.New("division by zero")
-
+	ErrNotEnoughOperands     = errors.New("not enough operands")
 	ErrMismatchedParentheses = errors.New("mismatched parentheses")
 	ErrUnknownOperator       = errors.New("unknown operator")
 	ErrEmptyExpression       = errors.New("expression is empty")
