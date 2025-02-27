@@ -54,7 +54,7 @@ func (cs *CalcService) AddExpression(expr string) (int, error) {
 
 	expression, err := NewExpression(id, expr)
 
-	cs.logger.Info("add", zap.Int("id", id), zap.String("expression", expr), zap.String("status", expression.Status))
+	cs.logger.Info("adding", zap.Int("id", id), zap.String("expression", expr), zap.String("status", expression.Status))
 
 	cs.exprTable[id] = expression
 	if err == nil && expression.Status == StatusPending {
