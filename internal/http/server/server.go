@@ -8,7 +8,7 @@ import (
 	"github.com/DobryySoul/Calc-service/internal/config"
 	"github.com/DobryySoul/Calc-service/internal/http/handler"
 	"github.com/DobryySoul/Calc-service/internal/service"
-	"github.com/DobryySoul/Calc-service/pkg/middleware/logger"
+	"github.com/DobryySoul/Calc-service/pkg/middleware"
 	"go.uber.org/zap"
 )
 
@@ -43,7 +43,9 @@ func newMuxHandler(ctx context.Context, log *zap.Logger, calcService *service.Ca
 		return nil, fmt.Errorf("handler initialization error: %w", err)
 	}
 
-	muxHandler = handler.Middlewares(muxHandler, logger.LoggerMiddleware(log))
-
+	muxHandler = handler.Middlewares(muxHandler, middleware.RecoveryMiddleware(log))
+	muxHandler = handler.Middlewares(muxHandler, middleware.LoggerMiddleware(log))
+	muxHandler = middleware.AllowCORS(muxHandler)
+	
 	return muxHandler, nil
 }

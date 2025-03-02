@@ -13,7 +13,7 @@ import (
 const (
 	StatusError   = "Error"
 	StatusDone    = "Done"
-	StatusPending = "Pending"
+	StatusWaiting = "Waiting"
 )
 
 const (
@@ -84,7 +84,7 @@ func NewExpression(id int, expr string) (*resp.Expression, error) {
 		return expression, nil
 	}
 
-	expression.Status = StatusPending
+	expression.Status = StatusWaiting
 	for _, val := range rpn {
 		if val == "" {
 			continue

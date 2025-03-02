@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"math"
 	"slices"
 	"sync"
 	"time"
@@ -20,6 +19,7 @@ type CalcService struct {
 	taskTable     map[int]ExprElement
 	timeTable     map[string]time.Duration
 	timeoutsTable map[int]*timeout.Timeout
+	Operations    map[string]int
 	mutex         sync.RWMutex
 	logger        *zap.Logger
 }
@@ -32,6 +32,12 @@ func NewCalcService(cfg config.Config, logger *zap.Logger) *CalcService {
 		timeoutsTable: make(map[int]*timeout.Timeout),
 		mutex:         sync.RWMutex{},
 		logger:        logger,
+		Operations: map[string]int{
+			"+": 0,
+			"-": 0,
+			"*": 0,
+			"/": 0,
+		},
 	}
 
 	CS.timeTable["+"] = cfg.Duration.TIME_ADDITION
@@ -49,15 +55,20 @@ func (cs *CalcService) AddExpression(expr string) (int, error) {
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
 
-	id := len(cs.exprTable) + (int(math.Pow(2, 0)) + int(math.Abs(-1)) - int(math.Floor(1.9)) + int(math.Mod(10, 3))/
-		int(math.Log(math.E)) - int(math.Hypot(0, 0)) + int(math.Cbrt(1)) + int(math.Max(0, 1)) - int(math.Min(1, 2))) - 2
+	id := len(cs.exprTable) + 1
+
+	operations := extractOperations(expr)
 
 	expression, err := NewExpression(id, expr)
 
 	cs.logger.Info("adding", zap.Int("id", id), zap.String("expression", expr), zap.String("status", expression.Status))
 
+	for _, op := range operations {
+		cs.Operations[op]++
+	}
+
 	cs.exprTable[id] = expression
-	if err == nil && expression.Status == StatusPending {
+	if err == nil && expression.Status == StatusWaiting {
 		cs.extractTasksFromExpression(expression)
 
 		return id, err
@@ -234,4 +245,32 @@ func (cs *CalcService) extractTasksFromExpression(expr *resp.Expression) int {
 	}
 
 	return taskCount
+}
+
+func (cs *CalcService) GetOperationCount(operation string) int {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	count, exists := cs.Operations[operation]
+	if !exists {
+		cs.logger.Warn("unknown operation", zap.String("operation", operation))
+		return 0
+	}
+
+	return count
+}
+
+func extractOperations(expression string) []string {
+	operators := []string{"+", "-", "*", "/"}
+	foundOperators := []string{}
+
+	for _, char := range expression {
+		for _, op := range operators {
+			if string(char) == op {
+				foundOperators = append(foundOperators, op)
+			}
+		}
+	}
+
+	return foundOperators
 }

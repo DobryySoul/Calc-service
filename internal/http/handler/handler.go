@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"path/filepath"
 	"slices"
 	"strconv"
 
@@ -14,16 +15,6 @@ import (
 )
 
 type Middleware func(http.Handler) http.Handler
-
-const (
-	invalidValue       = "invalid value"
-	invalidContentType = "invalid content type"
-	invalidExpression  = "invalid expression"
-	invalidId          = "invalid id"
-	expressionNotFound = "expression not found"
-	emptyQueue         = "no tasks in queue"
-	invalidResultInput = "invalid result"
-)
 
 type calcStates struct {
 	CalcService *service.CalcService
@@ -44,23 +35,28 @@ func NewHandler(ctx context.Context, log *zap.Logger, calcService *service.CalcS
 	mux.HandleFunc("GET /internal/task", calcState.sendTask)
 	mux.HandleFunc("POST /internal/task", calcState.receiveResult)
 
+	// метод для удобства отслеживания количества операций и подведения статистики для frontend
+	mux.HandleFunc("GET /api/v1/statistics", calcState.getStatistics)
+
+	mux.Handle("/", http.FileServer(http.Dir(filepath.Join("frontend"))))
+
 	return mux, nil
 }
 
 func Middlewares(next http.Handler, ds ...Middleware) http.Handler {
-	decorated := next
-	for d := len(ds) - 1; d >= 0; d-- {
-		decorated = ds[d](decorated)
+	middleware := next
+	for d := len(ds) - 1; d >= 1; d-- {
+		middleware = ds[d](middleware)
 	}
 
-	return decorated
+	return middleware
 }
 
 func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	var (
 		expr          req.ExpressionRequest
 		responseError resp.ResponseError
@@ -265,4 +261,22 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(responseError)
 		return
 	}
+}
+
+// Расширение функционала, добавление статистики, собственная инициатива
+func (cs *calcStates) getStatistics(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+
+	stats := resp.Statistics{
+		Operations: map[string]int{
+			"+": cs.CalcService.GetOperationCount("+"),
+			"-": cs.CalcService.GetOperationCount("-"),
+			"*": cs.CalcService.GetOperationCount("*"),
+			"/": cs.CalcService.GetOperationCount("/"),
+		},
+	}
+
+	_ = json.NewEncoder(w).Encode(stats)
 }

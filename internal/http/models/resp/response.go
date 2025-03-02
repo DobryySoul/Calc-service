@@ -36,3 +36,8 @@ type ExpressionUnit struct {
 type ExpressionList struct {
 	Exprs []Expression `json:"expressions"`
 }
+
+type Statistics struct {
+	Operations map[string]int   `json:"operations"`
+	AvgTime    map[string]int64 `json:"avg_time"`
+}
