@@ -1,0 +1,157 @@
+body {
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #1c1c1e;
+}
+
+.container {
+    max-width: 800px;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+h1, h2, h3 {
+    color: #1c1c1e;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.btn {
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007aff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0063cc;
+}
+
+.btn-outline-primary {
+    border-color: #007aff;
+    color: #007aff;
+}
+
+.btn-outline-primary:hover {
+    background-color: #007aff;
+    color: #ffffff;
+}
+
+.btn-outline-secondary {
+    border-color: #8e8e93;
+    color: #8e8e93;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #8e8e93;
+    color: #ffffff;
+}
+
+.btn-outline-danger {
+    border-color: #ff3b30;
+    color: #ff3b30;
+}
+
+.btn-outline-danger:hover {
+    background-color: #ff3b30;
+    color: #ffffff;
+}
+
+.form-control {
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #d1d1d6;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007aff;
+    box-shadow: none;
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #e5e5ea;
+    padding: 16px;
+    background-color: transparent;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.alert {
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 0;
+}
+
+.alert-success {
+    background-color: #ddf7e4;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-secondary {
+    background-color: #f2f2f7;
+    border-color: #e5e5ea;
+    color: #383d41;
+}
+
+canvas {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    margin-bottom: 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.container-fluid {
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
