@@ -132,9 +132,9 @@ document.getElementById('sendResultForm').addEventListener('submit', function(ev
         }
         return response.json();
     })
-    // .then(data => {
-    //     alert('Результат успешно отправлен: ' + data.result);
-    // })
+    .then(data => {
+        alert('Результат успешно отправлен: ' + data.result);
+    })
     .catch(error => {
         console.error('Ошибка:', error);
         alert('Ошибка при отправке результата: ' + error.message);
@@ -144,13 +144,7 @@ document.getElementById('sendResultForm').addEventListener('submit', function(ev
 function renderCharts(data) {
     const operationsCtx = document.getElementById('operationsChart').getContext('2d');
 
-    // Удаляем предыдущий график, если он существует
-    if (window.operationsChart) {
-        window.operationsChart.destroy();
-    }
-
-    // Создаем новый график
-    window.operationsChart = new Chart(operationsCtx, {
+    new Chart(operationsCtx, {
         type: 'bar',
         data: {
             labels: Object.keys(data.operations),
