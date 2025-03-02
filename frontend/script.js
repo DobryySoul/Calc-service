@@ -144,7 +144,13 @@ document.getElementById('sendResultForm').addEventListener('submit', function(ev
 function renderCharts(data) {
     const operationsCtx = document.getElementById('operationsChart').getContext('2d');
 
-    new Chart(operationsCtx, {
+    // Удаляем предыдущий график, если он существует
+    if (window.operationsChart) {
+        window.operationsChart.destroy();
+    }
+
+    // Создаем новый график
+    window.operationsChart = new Chart(operationsCtx, {
         type: 'bar',
         data: {
             labels: Object.keys(data.operations),
@@ -186,6 +192,6 @@ function fetchStatistics() {
         .catch(error => console.error('Ошибка:', error));
 }
 
-document.addEventListener('DOMContentLoaded', fetchStatistics);
-
 setInterval(fetchStatistics, 5000);
+
+fetchStatistics();
