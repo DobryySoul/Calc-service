@@ -61,7 +61,7 @@ func NewExpression(id int, expr string) (*resp.Expression, error) {
 		return &resp.Expression{
 			ID:         id,
 			Status:     StatusError,
-			Result:     "",
+			Result:     err.Error(),
 			Expression: expr,
 		}, err
 	}
@@ -102,7 +102,7 @@ func NewExpression(id int, expr string) (*resp.Expression, error) {
 
 	if err == calculation.ErrDivisionByZero {
 		expression.Status = StatusError
-		expression.Result = "Division by zero error"
+		expression.Result = calculation.ErrDivisionByZero.Error()
 	}
 
 	return expression, nil
