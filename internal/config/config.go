@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	Host           string `env:"HOST" default:"localhost"`
-	Port           string `env:"PORT" default:"8080"`
+	Port           string `env:"PORT" default:"9090"`
 	ComputingPOWER int    `env:"COMPUTING_POWER" default:"2"`
 	Duration       Duration
 }
@@ -17,8 +17,8 @@ type Config struct {
 type Duration struct {
 	TIME_ADDITION time.Duration `env:"TIME_ADDITION_MS" default:"2000"`
 	TIME_SUBTRACT time.Duration `env:"TIME_SUBTRACTION_MS" default:"2000"`
-	TIME_MULTIPLY time.Duration `env:"TIME_MULTIPLICATIONS_MS" default:"2000"`
-	TIME_DIVISION time.Duration `env:"TIME_DIVISIONS_MS" default:"2000"`
+	TIME_MULTIPLY time.Duration `env:"TIME_MULTIPLICATIONS_MS" default:"4000"`
+	TIME_DIVISION time.Duration `env:"TIME_DIVISIONS_MS" default:"4000"`
 }
 
 func LoadConfigEnv() (*Config, error) {
