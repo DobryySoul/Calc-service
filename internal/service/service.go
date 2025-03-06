@@ -60,7 +60,6 @@ func (cs *CalcService) AddExpression(expr string) (int, error) {
 	operations := extractOperations(expr)
 
 	expression, err := NewExpression(id, expr)
-	
 
 	cs.logger.Info("adding", zap.Int("id", id), zap.String("expression", expr), zap.String("status", expression.Status))
 
@@ -160,6 +159,7 @@ func (cs *CalcService) GetTask() *resp.Task {
 			return
 		}
 	}(*newtask)
+	newtask.OperationTime = cs.timeTable[newtask.Operation]
 
 	return newtask
 }
