@@ -40,10 +40,10 @@ func NewCalcService(cfg config.Config, logger *zap.Logger) *CalcService {
 		},
 	}
 
-	CS.timeTable["+"] = cfg.Duration.TIME_ADDITION
-	CS.timeTable["-"] = cfg.Duration.TIME_SUBTRACT
-	CS.timeTable["*"] = cfg.Duration.TIME_MULTIPLY
-	CS.timeTable["/"] = cfg.Duration.TIME_DIVISION
+	CS.timeTable["+"] = cfg.TIME_ADDITION
+	CS.timeTable["-"] = cfg.TIME_SUBTRACT
+	CS.timeTable["*"] = cfg.TIME_MULTIPLY
+	CS.timeTable["/"] = cfg.TIME_DIVISION
 
 	return CS
 }
@@ -133,7 +133,7 @@ func (cs *CalcService) GetTask() *resp.Task {
 	newtask := cs.tasks[0]
 	cs.tasks = cs.tasks[1:]
 
-	cs.logger.Info("task retrieved", zap.Int("task_id", newtask.ID))
+	cs.logger.Info("task retrieved", zap.Int("task_id", newtask.ID), zap.String("operation_time", newtask.OperationTime.String()))
 
 	cs.timeoutsTable[newtask.ID] = timeout.NewTimeout(
 		defaultTimeout + newtask.OperationTime,
@@ -159,7 +159,6 @@ func (cs *CalcService) GetTask() *resp.Task {
 			return
 		}
 	}(*newtask)
-	newtask.OperationTime = cs.timeTable[newtask.Operation]
 
 	return newtask
 }
@@ -182,8 +181,11 @@ func (cs *CalcService) PutResult(id int, value any) error {
 
 	el := cs.taskTable[id].Ptr
 	exprID := cs.taskTable[id].ID
+
 	cs.logger.Info("deleting task from task table", zap.Int("task_id", id))
+
 	delete(cs.taskTable, id)
+
 	expr, found := cs.exprTable[exprID]
 	if !found {
 		cs.logger.Warn("expression for task %d not found", zap.Int("task_id", id))
@@ -236,6 +238,7 @@ func (cs *CalcService) extractTasksFromExpression(expr *resp.Expression) int {
 		task.Arg2 = fmt.Sprintf("%f", el2.Value.(NumToken).Value)
 		task.Operation = op.Value.(OpToken).Value
 		task.OperationTime = cs.timeTable[task.Operation]
+		task.OperationTime = task.OperationTime / 1e6
 
 		taskCount++
 		cs.tasks = append(cs.tasks, task)
