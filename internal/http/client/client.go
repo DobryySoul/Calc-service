@@ -1,12 +1,15 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/DobryySoul/Calc-service/internal/http/models/req"
 	"github.com/DobryySoul/Calc-service/internal/http/models/resp"
 )
 
@@ -51,35 +54,35 @@ func (client *Client) GetTask() *resp.Task {
 	return &answer.Task
 }
 
-// func (client *Client) SendResult(result req.Result) {
-// 	var buf bytes.Buffer
+func (client *Client) SendResult(result req.Result) {
+	var buf bytes.Buffer
 
-// 	encoder := json.NewEncoder(&buf)
-// 	err := encoder.Encode(result)
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "error while encoding result: %v\n", err)
-// 		return
-// 	}
+	encoder := json.NewEncoder(&buf)
+	err := encoder.Encode(result)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while encoding result: %v\n", err)
+		return
+	}
 
-// 	url := fmt.Sprintf("http://%s:%d/internal/task", client.Host, client.Port)
-// 	req, err := http.NewRequest(http.MethodPost, url, &buf)
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "error while creating request for posting result: %v\n", err)
-// 		return
-// 	}
+	url := fmt.Sprintf("http://%s:%d/internal/task", client.Host, client.Port)
+	req, err := http.NewRequest(http.MethodPost, url, &buf)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while creating request for posting result: %v\n", err)
+		return
+	}
 
-// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-// 	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-// 	response, err := client.Do(req.WithContext(ctx))
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "error while posting result to server: %v\n", err)
-// 		return
-// 	}
+	response, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while posting result to server: %v\n", err)
+		return
+	}
 
-// 	defer response.Body.Close()
+	defer response.Body.Close()
 
-// 	if response.StatusCode != http.StatusOK {
-// 		fmt.Fprintf(os.Stderr, "response status code is %d, expected %d\n", response.StatusCode, http.StatusOK)
-// 	}
-// }
+	if response.StatusCode != http.StatusOK {
+		fmt.Fprintf(os.Stderr, "response status code is %d, expected %d\n", response.StatusCode, http.StatusOK)
+	}
+}
