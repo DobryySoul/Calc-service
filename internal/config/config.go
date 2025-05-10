@@ -13,13 +13,10 @@ type Config struct {
 	ComputingPOWER int    `env:"COMPUTING_POWER" default:"3"`
 	PostgresConfig PostgresConfig
 	JWTConfig      JWTConfig
-
-	DefaultTaskTimeoutBuffer time.Duration
-	JanitorInterval          time.Duration
-	TIME_ADDITION            time.Duration
-	TIME_SUBTRACT            time.Duration
-	TIME_MULTIPLY            time.Duration
-	TIME_DIVISION            time.Duration
+	TIME_ADDITION  time.Duration
+	TIME_SUBTRACT  time.Duration
+	TIME_MULTIPLY  time.Duration
+	TIME_DIVISION  time.Duration
 }
 
 type PostgresConfig struct {
