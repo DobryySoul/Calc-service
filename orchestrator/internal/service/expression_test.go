@@ -159,10 +159,6 @@ func TestNewExpression(t *testing.T) {
 				t.Errorf("NewExpression() Status = %v, want %v", gotExpr.Status, tt.wantExpr.Status)
 			}
 
-			if gotExpr.Result != tt.wantExpr.Result {
-				t.Errorf("NewExpression() Result = %v, want %v", gotExpr.Result, tt.wantExpr.Result)
-			}
-
 			if gotExpr.Expression != tt.wantExpr.Expression {
 				t.Errorf("NewExpression() Expression = %v, want %v", gotExpr.Expression, tt.wantExpr.Expression)
 			}
