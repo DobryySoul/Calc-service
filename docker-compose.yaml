@@ -11,13 +11,13 @@ services:
     ports:
       - "9090:9090"
 
-  # agent:
-  #   container_name: agent
-  #   build:
-  #     context: ./
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./config:/app/config
+  agent:
+    container_name: agent
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    volumes:
+      - ./config:/app/config
 
   postgres:
     container_name: postgres
