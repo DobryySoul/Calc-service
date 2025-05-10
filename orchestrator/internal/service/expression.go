@@ -51,8 +51,9 @@ func (num TaskToken) Type() int {
 }
 
 type ExprElement struct {
-	ID  int
-	Ptr *list.Element
+	ID     int
+	Ptr    *list.Element
+	UserID uint64
 }
 
 func NewExpression(id int, expr string) (*resp.Expression, error) {

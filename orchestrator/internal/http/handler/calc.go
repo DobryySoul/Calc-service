@@ -36,6 +36,17 @@ func Middlewares(next http.Handler, ds ...Middleware) http.Handler {
 }
 
 func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
+	cookiee, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	userID, err := strconv.ParseUint(cookiee.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookiee.Value))
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -58,7 +69,7 @@ func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := json.NewDecoder(r.Body).Decode(&expr)
+	err = json.NewDecoder(r.Body).Decode(&expr)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 
@@ -68,7 +79,7 @@ func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := cs.CalcService.AddExpression(expr.Expression)
+	id, err := cs.CalcService.AddExpression(expr.Expression, userID)
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -97,16 +108,27 @@ func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cs *calcHandlers) ListAll(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
 
 	var responseError resp.ResponseError
 
-	list := cs.CalcService.ListAll()
+	list := cs.CalcService.ListAll(userID)
 	cs.log.Info("received list of expressions", zap.Int("length", len(list.Exprs)))
 
-	err := json.NewEncoder(w).Encode(&list)
+	err = json.NewEncoder(w).Encode(&list)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
@@ -118,6 +140,18 @@ func (cs *calcHandlers) ListAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
+		return
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -125,7 +159,7 @@ func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
 	var responseError resp.ResponseError
 
 	id := r.PathValue("id")
-	Id, err := strconv.Atoi(id)
+	ID, err := strconv.Atoi(id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 
@@ -135,9 +169,9 @@ func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expr, err := cs.CalcService.FindById(Id)
+	expr, err := cs.CalcService.FindById(ID, userID)
 	if err != nil {
-		cs.log.Error("expression not found by id", zap.Int("id", Id), zap.Error(err))
+		cs.log.Error("expression not found by id", zap.Int("id", ID), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 
 		responseError.Error = expressionNotFound
@@ -149,7 +183,7 @@ func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(&expr)
 	if err != nil {
-		cs.log.Error("could not encode expression", zap.Int("id", Id), zap.Error(err))
+		cs.log.Error("could not encode expression", zap.Int("id", ID), zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 
 		responseError.Error = err.Error()
@@ -160,6 +194,18 @@ func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
+		return
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -168,7 +214,7 @@ func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
 
 	cs.log.Info("fetching new task from queue")
 
-	newTask := cs.CalcService.GetTask()
+	newTask := cs.CalcService.GetTask(userID)
 	if newTask == nil {
 		cs.log.Warn("no tasks in queue")
 		w.WriteHeader(http.StatusNotFound)
@@ -186,7 +232,7 @@ func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoder := json.NewEncoder(w)
-	err := encoder.Encode(&answer)
+	err = encoder.Encode(&answer)
 	if err != nil {
 		cs.log.Error("error encoding task response", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
@@ -201,6 +247,18 @@ func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
+		return
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -210,7 +268,7 @@ func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
 		responseError resp.ResponseError
 	)
 
-	err := json.NewDecoder(r.Body).Decode(&res)
+	err = json.NewDecoder(r.Body).Decode(&res)
 	if err != nil {
 		cs.log.Error("can't decode result", zap.Error(err))
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -223,7 +281,7 @@ func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
 
 	cs.log.Info("received result", zap.Int("id", res.ID), zap.Any("value", res.Value))
 
-	if err = cs.CalcService.PutResult(res.ID, res.Value); err != nil {
+	if err = cs.CalcService.PutResult(res.ID, res.Value, userID); err != nil {
 		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 
@@ -248,6 +306,18 @@ func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
 
 // Расширение функционала, добавление статистики, собственная инициатива
 func (cs *calcHandlers) GetStatistics(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		cs.log.Warn("could not find user id")
+		return
+	}
+
+	_, err = strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
+		return
+	}
+
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")

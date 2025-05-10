@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/orchestrator ./cmd/orchestrator/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/orchestrator ./cmd/main.go
 
 FROM alpine:latest
 
