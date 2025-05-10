@@ -13,6 +13,7 @@ import (
 )
 
 type CalcService struct {
+	cfg           *config.Config
 	exprTable     map[int]*resp.Expression
 	taskID        int
 	tasks         []*resp.Task
@@ -24,8 +25,9 @@ type CalcService struct {
 	logger        *zap.Logger
 }
 
-func NewCalcService(cfg config.Config, logger *zap.Logger) *CalcService {
+func NewCalcService(cfg *config.Config, logger *zap.Logger) *CalcService {
 	CS := &CalcService{
+		cfg:           cfg,
 		exprTable:     make(map[int]*resp.Expression),
 		taskTable:     make(map[int]ExprElement),
 		timeTable:     make(map[string]time.Duration),

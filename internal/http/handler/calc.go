@@ -1,10 +1,8 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
-	"path/filepath"
 	"slices"
 	"strconv"
 
@@ -16,31 +14,16 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
-type calcStates struct {
+type calcHandlers struct {
 	CalcService *service.CalcService
 	log         *zap.Logger
 }
 
-func NewHandler(ctx context.Context, log *zap.Logger, calcService *service.CalcService) (http.Handler, error) {
-	mux := http.NewServeMux()
-
-	calcState := calcStates{
+func NewCalcHandler(log *zap.Logger, calcService *service.CalcService) *calcHandlers {
+	return &calcHandlers{
 		CalcService: calcService,
 		log:         log,
 	}
-
-	mux.HandleFunc("POST /api/v1/calculate", calcState.calculate)
-	mux.HandleFunc("GET /api/v1/expressions", calcState.listAll)
-	mux.HandleFunc("GET /api/v1/expressions/{id}", calcState.listByID)
-	mux.HandleFunc("GET /internal/task", calcState.sendTask)
-	mux.HandleFunc("POST /internal/task", calcState.receiveResult)
-
-	// метод для удобства отслеживания количества операций и подведения статистики для frontend
-	mux.HandleFunc("GET /api/v1/statistics", calcState.getStatistics)
-
-	mux.Handle("/", http.FileServer(http.Dir(filepath.Join("frontend"))))
-
-	return mux, nil
 }
 
 func Middlewares(next http.Handler, ds ...Middleware) http.Handler {
@@ -52,7 +35,7 @@ func Middlewares(next http.Handler, ds ...Middleware) http.Handler {
 	return middleware
 }
 
-func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -113,7 +96,7 @@ func (cs *calcStates) calculate(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (cs *calcStates) listAll(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) ListAll(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -134,7 +117,7 @@ func (cs *calcStates) listAll(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) ListByID(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -176,7 +159,7 @@ func (cs *calcStates) listByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -217,7 +200,7 @@ func (cs *calcStates) sendTask(w http.ResponseWriter, r *http.Request) {
 	cs.log.Info("task sent successfully", zap.Int("task_id", newTask.ID), zap.String("task", newTask.Arg1+" "+newTask.Operation+" "+newTask.Arg2))
 }
 
-func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -264,7 +247,7 @@ func (cs *calcStates) receiveResult(w http.ResponseWriter, r *http.Request) {
 }
 
 // Расширение функционала, добавление статистики, собственная инициатива
-func (cs *calcStates) getStatistics(w http.ResponseWriter, r *http.Request) {
+func (cs *calcHandlers) GetStatistics(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	w.Header().Set("Content-Type", "application/json")

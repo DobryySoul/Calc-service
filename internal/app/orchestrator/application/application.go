@@ -12,13 +12,16 @@ import (
 )
 
 type Application struct {
-	cfg    config.Config
+	cfg    *config.Config
 	logger *zap.Logger
 }
 
 func NewApplicationOrchestrator(cfg *config.Config) *Application {
 	logger := logger.SetupLogger()
-	return &Application{cfg: *cfg, logger: logger}
+	return &Application{
+		cfg:    cfg,
+		logger: logger,
+	}
 }
 
 func (a *Application) Run(ctx context.Context) int {
