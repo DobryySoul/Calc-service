@@ -1,16 +1,29 @@
 package service
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/DobryySoul/orchestrator/internal/config"
-	"github.com/DobryySoul/orchestrator/internal/http/models/resp"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models/resp"
 	"github.com/DobryySoul/orchestrator/internal/timeout"
+	pb "github.com/DobryySoul/orchestrator/pkg/api/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+type OrchestratorServiceServer interface {
+	pb.UnimplementedOrchestratorServiceServer
+	GetTask(context.Context, *emptypb.Empty) (*pb.Task, error)
+	SendResult(context.Context, *pb.Result) (*emptypb.Empty, error)
+}
 
 type CalcService struct {
 	cfg           *config.Config
@@ -137,7 +150,131 @@ func (cs *CalcService) FindById(exprID int, userID uint64) (*resp.ExpressionUnit
 	return &resp.ExpressionUnit{Expr: *expr}, nil
 }
 
-func (cs *CalcService) GetTask(userID uint64) *resp.Task {
+func (cs *CalcService) GetTask(ctx context.Context, _ *emptypb.Empty) (*pb.Task, error) {
+	const defaultTimeout = 10 * time.Second
+
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	for userID, tasks := range cs.userTasks {
+		if len(tasks) > 0 {
+			newtask := tasks[0]
+			cs.userTasks[userID] = tasks[1:]
+
+			cs.logger.Info("task retrieved",
+				zap.Int("task_id", newtask.ID),
+				zap.String("operation_time", newtask.OperationTime.String()),
+				zap.Uint64("userID", userID))
+
+			cs.timeoutsTable[newtask.ID] = timeout.NewTimeout(
+				defaultTimeout + newtask.OperationTime,
+			)
+
+			go func(task *resp.Task, userID uint64) {
+				cs.mutex.Lock()
+				timeout, found := cs.timeoutsTable[task.ID]
+				cs.mutex.Unlock()
+
+				if !found {
+					cs.logger.Warn("timeout not found", zap.Int("task_id", task.ID))
+					return
+				}
+
+				select {
+				case <-timeout.Timer.C:
+					cs.handleTaskTimeout(task, userID)
+				case <-timeout.Ctx.Done():
+					cs.logger.Info("task completed before timeout",
+						zap.Int("task_id", task.ID),
+						zap.Uint64("userID", userID))
+				}
+			}(newtask, userID)
+
+			return &pb.Task{
+				Id:            int32(newtask.ID),
+				Arg1:          newtask.Arg1,
+				Arg2:          newtask.Arg2,
+				Operation:     newtask.Operation,
+				OperationTime: durationpb.New(newtask.OperationTime),
+				UserId:        userID,
+			}, nil
+		}
+	}
+
+	cs.logger.Warn("no tasks available")
+	return nil, status.Error(codes.NotFound, "no tasks available")
+}
+
+func (cs *CalcService) handleTaskTimeout(task *resp.Task, userID uint64) {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	cs.logger.Info("task timeout has been reached",
+		zap.Int("task_id", task.ID),
+		zap.Uint64("userID", userID))
+
+	cs.userTasks[userID] = append(cs.userTasks[userID], task)
+	delete(cs.timeoutsTable, task.ID)
+}
+
+func (cs *CalcService) SendResult(ctx context.Context, res *pb.Result) (*emptypb.Empty, error) {
+	cs.mutex.Lock()
+	defer cs.mutex.Unlock()
+
+	taskID := int(res.Id)
+	userID := res.UserId
+
+	if timeout, found := cs.timeoutsTable[taskID]; found {
+		cs.logger.Info("cancelling timeout for task", zap.Int("task_id", taskID))
+		timeout.Cancel()
+		delete(cs.timeoutsTable, taskID)
+	}
+
+	if _, found := cs.userTaskTable[userID][taskID]; !found {
+		cs.logger.Warn("task not found", zap.Int("task_id", taskID))
+		return nil, status.Errorf(codes.NotFound, "task id %d not found", taskID)
+	}
+
+	var resultValue interface{}
+	switch v := res.Value.(type) {
+	case *pb.Result_IntResult:
+		resultValue = v.IntResult
+	case *pb.Result_FloatResult:
+		resultValue = v.FloatResult
+	case *pb.Result_Error:
+		resultValue = errors.New(v.Error)
+	default:
+		cs.logger.Warn("unsupported result type", zap.Any("type", res.Value))
+		return nil, status.Error(codes.InvalidArgument, "unsupported result type")
+	}
+
+	el := cs.userTaskTable[userID][taskID].Ptr
+	exprID := cs.userTaskTable[userID][taskID].ID
+
+	delete(cs.userTaskTable[userID], taskID)
+
+	expr, found := cs.userExprTable[userID][exprID]
+	if !found {
+		cs.logger.Warn("expression not found", zap.Int("task_id", taskID))
+		return nil, status.Errorf(codes.NotFound, "expression for task %d not found", taskID)
+	}
+
+	if expr.Len() == 1 {
+		expr.Result = fmt.Sprintf("%v", resultValue)
+		expr.Status = StatusDone
+		expr.Remove(el)
+	} else {
+		numToken := NumToken{Value: resultValue.(float64)}
+		expr.InsertBefore(numToken, el)
+		expr.Remove(el)
+
+		cs.extractTasksFromExpression(expr, userID)
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (cs *CalcService) GetTaskUser(userID uint64) *resp.Task {
 	const defaultTimeout = 10 * time.Second
 
 	cs.mutex.Lock()
@@ -188,7 +325,7 @@ func (cs *CalcService) GetTask(userID uint64) *resp.Task {
 	return nil
 }
 
-func (cs *CalcService) PutResult(id int, value any, userID uint64) error {
+func (cs *CalcService) PutResultUser(id int, value any, userID uint64) error {
 	cs.mutex.Lock()
 	defer cs.mutex.Unlock()
 

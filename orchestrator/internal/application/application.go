@@ -6,7 +6,7 @@ import (
 	"os/signal"
 
 	"github.com/DobryySoul/orchestrator/internal/config"
-	"github.com/DobryySoul/orchestrator/internal/http/server"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/server"
 	"github.com/DobryySoul/orchestrator/pkg/logger"
 	"go.uber.org/zap"
 )

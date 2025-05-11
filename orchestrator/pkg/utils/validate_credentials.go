@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models"
 )
 
 func ValidateUserCredentials(user *models.User) error {

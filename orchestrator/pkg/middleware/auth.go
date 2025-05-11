@@ -1,14 +1,12 @@
 package middleware
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models/resp"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models/resp"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 )
@@ -38,13 +36,20 @@ func AuthMiddleware(secret string, logger *zap.Logger) func(http.Handler) http.H
 
 			tokenString := r.Header.Get("Authorization")
 			if tokenString == "" {
-				logger.Error("no token provided")
-				sendErrorResponse(w, http.StatusUnauthorized, ErrUnauthorized, &responseError)
-				return
+				if cookie, err := r.Cookie("auth_token"); err == nil {
+					tokenString = cookie.Value
+				}
 			}
 
 			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
-			token, err := jwt.ParseWithClaims(tokenString, &userClaim{}, func(token *jwt.Token) (interface{}, error) {
+
+			if tokenString == "" {
+				logger.Error("no token provided")
+
+				return
+			}
+
+			token, err := jwt.ParseWithClaims(tokenString, &userClaim{}, func(token *jwt.Token) (any, error) {
 				return []byte(secret), nil
 			})
 
@@ -63,21 +68,6 @@ func AuthMiddleware(secret string, logger *zap.Logger) func(http.Handler) http.H
 				logger.Error("invalid token")
 				sendErrorResponse(w, http.StatusUnauthorized, ErrInvalidToken, &responseError)
 				return
-			}
-
-			if claims, ok := token.Claims.(*userClaim); ok {
-				ctx := context.WithValue(r.Context(), "uid", claims.Uid)
-				r = r.WithContext(ctx)
-
-				uid := strconv.FormatUint(claims.Uid, 10)
-				http.SetCookie(w, &http.Cookie{
-					Name:     "user_id",
-					Value:    uid,
-					Path:     "/",
-					HttpOnly: true,
-					Secure:   false,
-					SameSite: http.SameSiteStrictMode,
-				})
 			}
 
 			next.ServeHTTP(w, r)

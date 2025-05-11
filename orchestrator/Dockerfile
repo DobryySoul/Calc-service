@@ -17,6 +17,7 @@ WORKDIR /app
 
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/frontend ./frontend
 COPY --from=builder /app/.env /app/.env
 COPY --from=builder /app/orchestrator /app/orchestrator
 

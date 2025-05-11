@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models/resp"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models/resp"
 	"github.com/DobryySoul/orchestrator/pkg/calculation"
 )
 

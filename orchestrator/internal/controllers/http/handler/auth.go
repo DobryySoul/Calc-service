@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/DobryySoul/orchestrator/internal/service"
 	"go.uber.org/zap"
@@ -28,7 +29,7 @@ type doLoginRequest struct {
 
 type doLoginResponse struct {
 	Token  string `json:"token"`
-	UserID uint64 `json:"userId"`
+	UserID uint64 `json:"user_id"`
 }
 
 func (a *authHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -61,19 +62,41 @@ func (a *authHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Authorization", "Bearer "+token)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400,
+	})
+
 	resp := doLoginResponse{
 		Token:  token,
 		UserID: uint64(user.ID),
 	}
 
+	uid := strconv.FormatUint(resp.UserID, 10)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "user_id",
+		Value:    uid,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   86400,
+	})
+
+	w.WriteHeader(http.StatusOK)
+
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		a.log.Error("failed to encode response", zap.Error(err))
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 type doRegisterNewUserRequest struct {

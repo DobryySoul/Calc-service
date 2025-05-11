@@ -1,6 +1,10 @@
 package config
 
-import "github.com/ilyakaznacheev/cleanenv"
+import (
+	"fmt"
+
+	"github.com/ilyakaznacheev/cleanenv"
+)
 
 type Config struct {
 	Host           string `yaml:"host"`
@@ -8,12 +12,12 @@ type Config struct {
 	ComputingPOWER int    `yaml:"computing_power"`
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	var cfg Config
 
-	if err := cleanenv.ReadConfig("./config/config.yml", &cfg); err != nil {
-		return nil
+	if err := cleanenv.ReadConfig("./config/config.yaml", &cfg); err != nil {
+		return nil, fmt.Errorf("config error: %w", err)
 	}
 
-	return &cfg
+	return &cfg, nil
 }

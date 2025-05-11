@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models/req"
-	"github.com/DobryySoul/orchestrator/internal/http/models/resp"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models/req"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models/resp"
 	"github.com/DobryySoul/orchestrator/internal/service"
 	"go.uber.org/zap"
 )
@@ -36,15 +36,15 @@ func Middlewares(next http.Handler, ds ...Middleware) http.Handler {
 }
 
 func (cs *calcHandlers) Calculate(w http.ResponseWriter, r *http.Request) {
-	cookiee, err := r.Cookie("user_id")
+	cookie, err := r.Cookie("user_id")
 	if err != nil {
 		cs.log.Warn("could not find user id")
 		return
 	}
 
-	userID, err := strconv.ParseUint(cookiee.Value, 10, 64)
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
 	if err != nil {
-		cs.log.Warn("could not convert string to int0", zap.String("value", cookiee.Value))
+		cs.log.Warn("could not convert string to int0", zap.String("value", cookie.Value))
 	}
 
 	defer r.Body.Close()
@@ -214,7 +214,7 @@ func (cs *calcHandlers) SendTask(w http.ResponseWriter, r *http.Request) {
 
 	cs.log.Info("fetching new task from queue")
 
-	newTask := cs.CalcService.GetTask(userID)
+	newTask := cs.CalcService.GetTaskUser(userID)
 	if newTask == nil {
 		cs.log.Warn("no tasks in queue")
 		w.WriteHeader(http.StatusNotFound)
@@ -281,7 +281,7 @@ func (cs *calcHandlers) ReceiveResult(w http.ResponseWriter, r *http.Request) {
 
 	cs.log.Info("received result", zap.Int("id", res.ID), zap.Any("value", res.Value))
 
-	if err = cs.CalcService.PutResult(res.ID, res.Value, userID); err != nil {
+	if err = cs.CalcService.PutResultUser(res.ID, res.Value, userID); err != nil {
 		cs.log.Error("can't put result", zap.Int("id", res.ID), zap.Error(err))
 		w.WriteHeader(http.StatusNotFound)
 

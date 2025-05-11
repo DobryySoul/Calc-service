@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package calculator.v1;
+option go_package = "github.com/yourproject/pkg/api/v1;calculatorv1";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+
+message Task {
+  int32 id = 1;
+  string arg1 = 2;
+  string arg2 = 3;
+  string operation = 4;
+  google.protobuf.Duration operation_time = 5; 
+  uint64 user_id = 6;
+}
+
+message Result {
+  int32 id = 1;
+  oneof value {
+    int64 int_result = 2;
+    double float_result = 3;
+    string error = 4;
+  }
+  uint64 user_id = 5;
+}
+
+service OrchestratorService {
+  rpc GetTask(google.protobuf.Empty) returns (Task);
+  
+  rpc SendResult(Result) returns (google.protobuf.Empty);
+}
+
+message ExpressionRequest {
+  string expression = 1;
+  uint64 user_id = 2;
+}
+
+message ExpressionResponse {
+  string task_id = 1;
+}
+
+message ResultRequest {
+  string task_id = 1;
+  uint64 user_id = 2;
+}
+
+message ResultResponse {
+  oneof result {
+    string value = 1;
+    string error = 2;
+  }
+  string status = 3; 
+}
+
+service AgentService {
+}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -44,4 +44,16 @@ func (r *AuthRepository) Login(ctx context.Context, email, password string) (*mo
 	}
 
 	return &user, nil
+}
+
+func (r *AuthRepository) GetUserByEmail(ctx context.Context, email string) error {
+	const query = `SELECT * FROM users WHERE email = $1`
+	var user models.User
+
+	err := r.pg.QueryRow(ctx, query, email).Scan(&user.ID, &user.Email, &user.Password)
+	if err != nil {
+		return fmt.Errorf("failed to execute query and get user by email: %w", err)
+	}
+
+	return nil
 }

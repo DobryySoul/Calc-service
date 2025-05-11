@@ -186,6 +186,6 @@ function fetchStatistics() {
         .catch(error => console.error('Ошибка:', error));
 }
 
-setInterval(fetchStatistics, 5000);
+// setInterval(fetchStatistics, 5000);
 
 fetchStatistics();

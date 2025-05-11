@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models"
 	"github.com/DobryySoul/orchestrator/pkg/jwt"
 	"github.com/DobryySoul/orchestrator/pkg/utils"
 	"go.uber.org/zap"
@@ -15,6 +15,7 @@ import (
 type AuthRepo interface {
 	Register(ctx context.Context, user *models.User) error
 	Login(ctx context.Context, email, password string) (*models.User, error)
+	GetUserByEmail(ctx context.Context, email string) error
 }
 
 type AuthService struct {
@@ -52,6 +53,11 @@ func (a *AuthService) Register(ctx context.Context, email, password string) erro
 	}
 
 	user.Password = string(hashPass)
+
+	if err := a.authRepo.GetUserByEmail(ctx, user.Email); err == nil {
+		return fmt.Errorf("user with email %s already exists", user.Email)
+	}
+
 	if err = a.authRepo.Register(ctx, user); err != nil {
 		return fmt.Errorf("failed to register user: %w", err)
 	}

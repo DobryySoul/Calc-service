@@ -19,6 +19,7 @@ type Task struct {
 	Arg2          string        `json:"arg2"`
 	Operation     string        `json:"operation"`
 	OperationTime time.Duration `json:"operation_time"`
+	UserID        uint64        `json:"user_id"`
 }
 
 type Expression struct {
@@ -27,6 +28,7 @@ type Expression struct {
 	Status     string `json:"status"`
 	Result     string `json:"result"`
 	Expression string `json:"expression"`
+	UserID     uint64 `json:"user_id"`
 }
 
 type ExpressionUnit struct {

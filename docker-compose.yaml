@@ -4,7 +4,7 @@ services:
   orchestrator:
     container_name: orchestrator
     build: 
-      context: ./
+      context: ./orchestrator
       dockerfile: Dockerfile
     depends_on:
       - postgres
@@ -14,10 +14,10 @@ services:
   agent:
     container_name: agent
     build:
-      context: ./
+      context: ./agent
       dockerfile: Dockerfile
     volumes:
-      - ./config:/app/config
+      - ./agent/config:/app/config
 
   postgres:
     container_name: postgres

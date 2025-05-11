@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/DobryySoul/orchestrator/internal/http/models"
+	"github.com/DobryySoul/orchestrator/internal/controllers/http/models"
 	"github.com/DobryySoul/orchestrator/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )

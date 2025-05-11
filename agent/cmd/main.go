@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"agent/internal/application"
@@ -9,9 +10,18 @@ import (
 )
 
 func main() {
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		panic(err)
+	}
 
-	app := application.NewApplicationAgent(cfg)
+	fmt.Printf("\nCONFIG: %+v\n", cfg)
+
+	app, err := application.NewApplicationAgent(cfg)
+	if err != nil {
+		panic(err)
+	}
+
 	exitCode := app.Run(context.Background())
 	os.Exit(exitCode)
 }
