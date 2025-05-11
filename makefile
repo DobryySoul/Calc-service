@@ -1,8 +1,15 @@
 APP_NAME=calc-service
 BINARY=$(APP_NAME)
 DB_URL_DOCKER=postgres://postgres:password@postgres:5432/postgres?sslmode=disable
+DB_URL=postgres://postgres:password@localhost:5432/postgres?sslmode=disable
 
 all: test-orchestrator test-agent build run migrations-docker-up
+
+migrations-up:
+	migrate -path ./migrations -database '$(DB_URL)' up
+
+migrations-down:
+	migrate -path ./migrations -database '$(DB_URL)' down
 
 # Миграции в Docker-окружении
 migrations-docker-up:
