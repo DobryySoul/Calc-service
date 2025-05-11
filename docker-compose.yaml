@@ -24,7 +24,7 @@ services:
     image: postgres:17
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 05042007PULlup!
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
       POSTGRES_PORT: 5432
     volumes:

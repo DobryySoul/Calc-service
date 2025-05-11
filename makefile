@@ -1,18 +1,8 @@
-APP_NAME=auth-service
+APP_NAME=calc-service
 BINARY=$(APP_NAME)
-DB_URL_DOCKER=postgres://postgres:05042007PULlup!@postgres:5432/postgres?sslmode=disable
+DB_URL_DOCKER=postgres://postgres:password@postgres:5432/postgres?sslmode=disable
 
-all: generate build
-
-# Генерация gRPC кода
-generate:
-	protoc \
-		--proto_path=./api/proto/calculator \
-		--go_out=./pkg/api/v1 \
-		--go-grpc_out=./pkg/api/v1 \
-		--go_opt=paths=source_relative \
-		--go-grpc_opt=paths=source_relative \
-		./api/proto/calculator/calculator.proto
+all: test-orchestrator test-agent build run migrations-docker-up
 
 # Миграции в Docker-окружении
 migrations-docker-up:
@@ -25,23 +15,22 @@ migrations-docker-down:
 
 # Сборка приложения
 build:
-	go build -o $(APP_NAME) cmd/orchestrator/main.go
 	docker-compose build
 
 # Запуск приложения
 run: build migrations-docker-up
-	docker-compose up orchestrator
+	docker-compose up -d --build
 
-# Тестирование
-test-integration:
-	docker-compose run --rm auth-service go test -v -tags=integration ./tests/integration/auth...
+# Запуск тестов
+test-agent:
+	cd ./agent && go test -v -short ./...
 
-test:
-	docker-compose run --rm auth-service go test -v -short ./...
+test-orchestrator:
+	cd ./orchestrator && go test -v -short ./...
 
 # Очистка
 clean:
 	docker-compose down -v
 	rm -f $(BINARY)
 
-.PHONY: all generate migrations-up migrations-down build run test-integration test clean
+.PHONY: all migrations-up migrations-down build run test-agent test-orchestrator clean

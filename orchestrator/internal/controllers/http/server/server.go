@@ -55,6 +55,9 @@ func Run(ctx context.Context, logger *zap.Logger, cfg *config.Config) (func(cont
 	fs := http.FileServer(http.Dir(frontendDir))
 	r.Handle("/*", fs)
 
+	r.Get("/internal/task", calcHandler.SendTask)
+	r.Post("/internal/task", calcHandler.ReceiveResult)
+
 	r.Route("/api/v1", func(r chi.Router) {
 
 		r.Get("/register", func(w http.ResponseWriter, r *http.Request) {
@@ -67,19 +70,14 @@ func Run(ctx context.Context, logger *zap.Logger, cfg *config.Config) (func(cont
 		r.Post("/login", authHandler.Login)
 		r.Post("/register", authHandler.Register)
 
+		r.Get("/statistics", calcHandler.GetStatistics)
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthMiddleware(cfg.JWTConfig.Secret, logger))
 			r.Post("/calculate", calcHandler.Calculate)
 			r.Get("/expressions", calcHandler.ListAll)
 			r.Get("/expressions/{id}", calcHandler.ListByID)
-
-			// метод для удобства отслеживания количества операций и подведения статистики для frontend
-			r.Get("/statistics", calcHandler.GetStatistics)
 		})
 	})
-
-	r.Get("/internal/task", calcHandler.SendTask)
-	r.Post("/internal/task", calcHandler.ReceiveResult)
 
 	httpServer := &http.Server{
 		Addr:    cfg.Host + ":" + cfg.Port,
