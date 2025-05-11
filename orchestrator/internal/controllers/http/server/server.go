@@ -48,35 +48,31 @@ func Run(ctx context.Context, logger *zap.Logger, cfg *config.Config) (func(cont
 	workDir, _ := os.Getwd()
 	frontendDir := filepath.Join(workDir, "frontend")
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, filepath.Join(frontendDir, "index.html"))
-	})
-
 	fs := http.FileServer(http.Dir(frontendDir))
 	r.Handle("/*", fs)
 
 	r.Get("/internal/task", calcHandler.SendTask)
 	r.Post("/internal/task", calcHandler.ReceiveResult)
 
-	r.Route("/api/v1", func(r chi.Router) {
+	r.Get("/api/v1/register", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(frontendDir, "register.html"))
+	})
+	r.Get("/api/v1/login", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, filepath.Join(frontendDir, "login.html"))
+	})
 
-		r.Get("/register", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(frontendDir, "register.html"))
-		})
-		r.Get("/login", func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(frontendDir, "login.html"))
-		})
+	r.Post("/api/v1/login", authHandler.Login)
+	r.Post("/api/v1/register", authHandler.Register)
 
-		r.Post("/login", authHandler.Login)
-		r.Post("/register", authHandler.Register)
-
-		r.Get("/statistics", calcHandler.GetStatistics)
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.AuthMiddleware(cfg.JWTConfig.Secret, logger))
-			r.Post("/calculate", calcHandler.Calculate)
-			r.Get("/expressions", calcHandler.ListAll)
-			r.Get("/expressions/{id}", calcHandler.ListByID)
+	r.Get("/api/v1/statistics", calcHandler.GetStatistics)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AuthMiddleware(cfg.JWTConfig.Secret, logger))
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filepath.Join(frontendDir, "index.html"))
 		})
+		r.Post("/api/v1/calculate", calcHandler.Calculate)
+		r.Get("/api/v1/expressions", calcHandler.ListAll)
+		r.Get("/api/v1/expressions/{id}", calcHandler.ListByID)
 	})
 
 	httpServer := &http.Server{
